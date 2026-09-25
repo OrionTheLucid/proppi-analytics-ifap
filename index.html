@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel PROPPI - IFAP</title>
+    <!-- Tailwind CSS para estilização moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <!-- Cabeçalho Institucional -->
+    <header class="bg-emerald-800 text-white shadow-md py-6 px-8">
+        <h1 class="text-2xl font-bold">Sistema de Gestão de Projetos - PROPPI</h1>
+        <p class="text-emerald-200 text-sm">Instituto Federal de Educação, Ciência e Tecnologia do Amapá</p>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+
+        <!-- Bloco de Indicadores (KPIs) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm font-medium text-slate-500">Total Geral de Projetos</p>
+                <p id="total-projetos" class="text-3xl font-bold text-emerald-700 mt-2">Carregando...</p>
+            </div>
+        </div>
+
+        <!-- Seção de Filtros Interativos -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4">Filtrar Projetos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Filtrar por Campus</label>
+                    <select id="filtro-campus" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <option value="">Todos os Campus</option>
+                        <option value="MCP">Macapá (MCP)</option>
+                        <option value="LRJ">Laranjal do Jari (LRJ)</option>
+                        <option value="PTG">Porto Grande (PTG)</option>
+                        <option value="STN">Santana (STN)</option>
+                        <option value="OPQ">Oiapoque (OPQ)</option>
+                        <option value="RE">Reitoria (RE)</option>
+                        <option value="PBA">Pedra Branca do Amapari (PBA)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Filtrar por Situação</label>
+                    <select id="filtro-situacao" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <option value="">Todas as Situações</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Em execução">Em execução</option>
+                        <option value="Em edição">Em edição</option>
+                        <option value="Enviado">Enviado</option>
+                        <option value="Não Enviado">Não Enviado</option>
+                        <option value="Cancelado">Cancelado</option>
+                        <option value="Inativado">Inativado</option>
+                        <option value="Não aceito">Não aceito</option>
+                        <option value="Não selecionado">Não selecionado</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="carregarProjetos()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-medium py-2.5 px-4 rounded-lg transition text-sm">
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Tabela e Listagem -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-slate-700">Relação de Projetos Cadastrados</h2>
+                <span id="contador-exibicao" class="text-xs text-slate-400 font-medium">Exibindo registros</span>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-slate-400 text-sm uppercase">
+                            <th class="py-3 px-4">Título</th>
+                            <th class="py-3 px-4">Campus</th>
+                            <th class="py-3 px-4">Edital</th>
+                            <th class="py-3 px-4">Situação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-projetos" class="divide-y divide-slate-100 text-sm">
+                        <!-- Os dados serão injetados aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Script de Integração com a API FastAPI -->
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        async function carregarIndicadores() {
+            try {
+                const res = await fetch(`${API_URL}/api/projetos/indicadores`);
+                const data = await res.json();
+                document.getElementById('total-projetos').innerText = data.metrica_geral.total_projetos;
+            } catch (error) {
+                console.error("Erro ao carregar indicadores:", error);
+            }
+        }
+
+        async function carregarProjetos() {
+            try {
+                const campus = document.getElementById('filtro-campus').value;
+                const situacao = document.getElementById('filtro-situacao').value;
+
+                let url = `${API_URL}/api/projetos?limite=40`;
+                if (campus) url += `&campus=${campus}`;
+                if (situacao) url += `&situacao=${encodeURIComponent(situacao)}`;
+
+                const tabela = document.getElementById('tabela-projetos');
+                tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">A processar dados...</td></tr>`;
+
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                tabela.innerHTML = "";
+
+                if (!data.resultados || data.resultados.length === 0) {
+                    tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Nenhum projeto encontrado com esses filtros.</td></tr>`;
+                    document.getElementById('contador-exibicao').innerText = "0 registros encontrados";
+                    return;
+                }
+
+                document.getElementById('contador-exibicao').innerText = `Mostrando ${data.resultados.length} registros`;
+
+                data.resultados.forEach(projeto => {
+                    const linha = `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-4 font-medium text-slate-900">${projeto.titulo}</td>
+                            <td class="py-3 px-4">${projeto.campus}</td>
+                            <td class="py-3 px-4">${projeto.edital} (${projeto.ano_edital})</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                    ${projeto.situacao_atual}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                    tabela.innerHTML += linha;
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar projetos:", error);
+                document.getElementById('tabela-projetos').innerHTML = `<tr><td colspan="4" class="py-6 text-center text-red-500">Erro ao comunicar com a API.</td></tr>`;
+            }
+        }
+
+        // Executa ao abrir a página
+        carregarIndicadores();
+        carregarProjetos();
+    </script>
+</body>
+</html>
