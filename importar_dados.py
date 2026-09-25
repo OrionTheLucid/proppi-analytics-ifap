@@ -3,6 +3,8 @@ from database import Sessionlocal, engine
 import models
 
 # Garante que o banco de dados e as tabelas mapeadas no models.py sejam geradas fisicamente no SQlite antes de iniciar a inserção
+# Remove a tabela antiga se ela existir (evitando dados duplicados) e recria do zero
+models.ProjetoModel.__table__.drop(engine, checkfirst=True)
 models.Base.metadata.create_all(bind=engine)
 
 def importar_planilha():
