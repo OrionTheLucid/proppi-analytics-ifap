@@ -3,35 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel PROPPI - IFAP</title>
-    <!-- Tailwind CSS para estilização moderna -->
+    <title>Painel PROPPI - IFAP (Business Intelligence)</title>
+    <!-- Tailwind CSS com suporte a classe de dark mode -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+    /* Estilização da barra de rolagem para navegadores baseados em WebKit (Chrome, Edge, Safari) */
+    .dark *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .dark *::-webkit-scrollbar-track {
+        background: #0f172a; /* Cor de fundo do trilho (slate-900 / slate-950) */
+        border-radius: 4px;
+    }
+    .dark *::-webkit-scrollbar-thumb {
+        background: #334155; /* Cor do "puxador" da barra (slate-700) */
+        border-radius: 4px;
+    }
+    .dark *::-webkit-scrollbar-thumb:hover {
+        background: #475569; /* Cor do puxador ao passar o mouse (slate-600) */
+    }
+</style>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans">
+    <style>
+    /* Estilização da barra de rolagem para navegadores baseados em WebKit (Chrome, Edge, Safari) */
+    .dark *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .dark *::-webkit-scrollbar-track {
+        background: #0f172a; /* Cor de fundo do trilho (slate-900 / slate-950) */
+        border-radius: 4px;
+    }
+    .dark *::-webkit-scrollbar-thumb {
+        background: #334155; /* Cor do "puxador" da barra (slate-700) */
+        border-radius: 4px;
+    }
+    .dark *::-webkit-scrollbar-thumb:hover {
+        background: #475569; /* Cor do puxador ao passar o mouse (slate-600) */
+    }
+</style>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans transition-colors">
 
-    <!-- Cabeçalho Institucional -->
-    <header class="bg-emerald-800 text-white shadow-md py-6 px-8">
-        <h1 class="text-2xl font-bold">Sistema de Gestão de Projetos - PROPPI</h1>
-        <p class="text-emerald-200 text-sm">Instituto Federal de Educação, Ciência e Tecnologia do Amapá</p>
+    <header class="bg-emerald-800 dark:bg-slate-900 text-white shadow-md py-6 px-8 flex justify-between items-center transition-colors">
+        <div>
+            <h1 class="text-2xl font-bold">Sistema de Gestão de Projetos - PROPPI</h1>
+            <p class="text-emerald-200 dark:text-slate-400 text-sm">Instituto Federal de Educação, Ciência e Tecnologia do Amapá (Painel Analítico)</p>
+        </div>
+        <button onclick="alternarDarkMode()" class="bg-emerald-700 dark:bg-slate-800 hover:bg-emerald-900 dark:hover:bg-slate-700 px-4 py-2.5 rounded-lg text-sm transition">
+        Dark | Light Mode
+        </button>
     </header>
 
     <main class="max-w-7xl mx-auto p-6 space-y-6">
 
-        <!-- Bloco de Indicadores (KPIs) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-sm font-medium text-slate-500">Total Geral de Projetos</p>
-                <p id="total-projetos" class="text-3xl font-bold text-emerald-700 mt-2">Carregando...</p>
+        <!-- Bloco de Indicador Geral (KPI) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm md:col-span-1">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Geral de Projetos</p>
+                <p id="total-projetos" class="text-3xl font-bold text-emerald-700 dark:text-emerald-500 mt-2">Carregando...</p>
+            </div>
+            <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 p-6 rounded-xl shadow-sm md:col-span-3 flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-emerald-900 dark:text-emerald-300 text-base">Modo de Consulta Institucional Ativo</h3>
+                    <p class="text-emerald-700 dark:text-emerald-400 text-sm mt-1">Utilize os filtros ou clique nas linhas da tabela para detalhar os registros.</p>
+                </div>
             </div>
         </div>
 
+        <!-- Seção de Gráficos e Indicadores -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- 1. Projetos por Campus -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Projetos por Campus</h2>
+                <div class="relative h-64 flex items-center justify-center">
+                    <canvas id="graficoCampus"></canvas>
+                </div>
+            </div>
+
+            <!-- 2. Projetos por Situação -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Projetos por Situação Atual</h2>
+                <div class="relative h-64 flex items-center justify-center">
+                    <canvas id="graficoSituacao"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. Evolução por Ano -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Evolução de Projetos por Ano</h2>
+                <div class="relative h-64 flex items-center justify-center">
+                    <canvas id="graficoAno"></canvas>
+                </div>
+            </div>
+
+            <!-- 4. Principais Grupos de Pesquisa -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Principais Grupos de Pesquisa</h2>
+                <div class="max-h-80 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg">
+                    <div id="lista-grupos" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <div class="p-4 text-center text-slate-400 text-sm">Carregando grupos...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Projetos por Área -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm md:col-span-2">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Projetos por Área</h2>
+                <div class="max-h-80 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg">
+                    <div id="lista-areas" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <div class="p-4 text-center text-slate-400 text-sm">Carregando áreas...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
         <!-- Seção de Filtros Interativos -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-700 mb-4">Filtrar Projetos</h2>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Filtrar Projetos</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- Caixa de Pesquisa com Sugestões -->
+                <div class="relative md:col-span-3">
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Buscar por Nome do Projeto</label>
+                    <input type="text" id="input-busca-titulo" placeholder="Digite o título do projeto..." 
+                           class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"
+                           autocomplete="off">
+                    <!-- Lista de sugestões flutuante -->
+                    <div id="sugestoes-busca" class="absolute left-0 right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-20 divide-y divide-slate-100 dark:divide-slate-800"></div>
+                </div>
+
                 <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">Filtrar por Campus</label>
-                    <select id="filtro-campus" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Filtrar por Campus</label>
+                    <select id="filtro-campus" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
                         <option value="">Todos os Campus</option>
                         <option value="MCP">Macapá (MCP)</option>
                         <option value="LRJ">Laranjal do Jari (LRJ)</option>
@@ -43,8 +156,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">Filtrar por Situação</label>
-                    <select id="filtro-situacao" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Filtrar por Situação</label>
+                    <select id="filtro-situacao" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
                         <option value="">Todas as Situações</option>
                         <option value="Concluído">Concluído</option>
                         <option value="Em execução">Em execução</option>
@@ -65,52 +178,215 @@
             </div>
         </div>
 
-        <!-- Seção de Tabela e Listagem -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <!-- Seção de Tabela -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold text-slate-700">Relação de Projetos Cadastrados</h2>
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200">Relação de Projetos Cadastrados</h2>
                 <span id="contador-exibicao" class="text-xs text-slate-400 font-medium">Exibindo registros</span>
             </div>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-200 text-slate-400 text-sm uppercase">
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 text-sm uppercase">
                             <th class="py-3 px-4">Título</th>
                             <th class="py-3 px-4">Campus</th>
                             <th class="py-3 px-4">Edital</th>
                             <th class="py-3 px-4">Situação</th>
                         </tr>
                     </thead>
-                    <tbody id="tabela-projetos" class="divide-y divide-slate-100 text-sm">
-                        <!-- Os dados serão injetados aqui via JavaScript -->
-                    </tbody>
+                    <tbody id="tabela-projetos" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
                 </table>
             </div>
         </div>
 
     </main>
 
-    <!-- Script de Integração com a API FastAPI -->
+    <!-- Modal de Detalhes -->
+    <div id="modal-detalhes" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start border-b dark:border-slate-800 pb-3">
+                <h3 id="modal-titulo" class="text-xl font-bold text-slate-900 dark:text-slate-100 pr-4">Título do Projeto</h3>
+                <button onclick="fecharModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-bold text-xl">&times;</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="block text-slate-400 font-medium">Campus</span><span id="modal-campus" class="text-slate-700 dark:text-slate-300 font-semibold">-</span></div>
+                <div><span class="block text-slate-400 font-medium">Situação Atual</span><span id="modal-situacao" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 mt-1">-</span></div>
+                <div><span class="block text-slate-400 font-medium">Coordenador(a)</span><span id="modal-coordenador" class="text-slate-700 dark:text-slate-300">-</span></div>
+                <div><span class="block text-slate-400 font-medium">Período de Execução</span><span id="modal-periodo" class="text-slate-700 dark:text-slate-300">-</span></div>
+                <div class="col-span-2"><span class="block text-slate-400 font-medium">Edital / Ano</span><span id="modal-edital" class="text-slate-700 dark:text-slate-300">-</span></div>
+                <div class="col-span-2"><span class="block text-slate-400 font-medium">Área de Conhecimento</span><span id="modal-area" class="text-slate-700 dark:text-slate-300">-</span></div>
+                <div class="col-span-2"><span class="block text-slate-400 font-medium">Grupo de Pesquisa</span><span id="modal-grupo" class="text-slate-700 dark:text-slate-300">-</span></div>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-medium text-sm mb-1">Resumo do Projeto</span>
+                <p id="modal-resumo" class="text-slate-600 dark:text-slate-300 text-sm bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700 leading-relaxed">-</p>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="fecharModal()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium px-4 py-2 rounded-lg text-sm transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
     <script>
         const API_URL = "http://127.0.0.1:8000";
+        let chartCampus = null, chartSituacao = null, chartAno = null;
+
+        // Configuração do Modo Escuro global
+        function alternarDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('tema', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('tema', 'dark');
+            }
+        }
+
+        // Manter o tema salvo ao recarregar a página
+        if (localStorage.getItem('tema') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
 
         async function carregarIndicadores() {
             try {
                 const res = await fetch(`${API_URL}/api/projetos/indicadores`);
                 const data = await res.json();
                 document.getElementById('total-projetos').innerText = data.metrica_geral.total_projetos;
+                renderizarGraficos(data);
+                renderizarListaAreas(data.distribuicao_por_area);
+                renderizarListaGrupos(data.distribuicao_por_grupo);
             } catch (error) {
                 console.error("Erro ao carregar indicadores:", error);
             }
         }
 
+        // Lógica de Autocompletar / Sugestões em tempo real (Fora da função de indicadores)
+        const inputBusca = document.getElementById('input-busca-titulo');
+        const containerSugestoes = document.getElementById('sugestoes-busca');
+
+        inputBusca.addEventListener('input', async function() {
+            const termo = this.value.trim();
+
+            if (termo.length < 2) {
+                containerSugestoes.classList.add('hidden');
+                containerSugestoes.innerHTML = '';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/projetos?titulo=${encodeURIComponent(termo)}&limite=5`);
+                const data = await res.json();
+
+                containerSugestoes.innerHTML = '';
+
+                if (!data.resultados || data.resultados.length === 0) {
+                    containerSugestoes.classList.add('hidden');
+                    return;
+                }
+
+                data.resultados.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = "p-3 hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer text-sm text-slate-700 dark:text-slate-200 transition";
+                    item.innerText = p.titulo;
+                    item.onclick = () => {
+                        inputBusca.value = p.titulo;
+                        containerSugestoes.classList.add('hidden');
+                        carregarProjetos();
+                    };
+                    containerSugestoes.appendChild(item);
+                });
+
+                containerSugestoes.classList.remove('hidden');
+            } catch (error) {
+                console.error("Erro ao buscar sugestões:", error);
+            }
+        });
+
+        // Fecha a caixa de sugestões ao clicar fora dela
+        document.addEventListener('click', function(e) {
+            if (!inputBusca.contains(e.target) && !containerSugestoes.contains(e.target)) {
+                containerSugestoes.classList.add('hidden');
+            }
+        });
+
+        function renderizarGraficos(data) {
+            if (chartCampus) chartCampus.destroy();
+            chartCampus = new Chart(document.getElementById('graficoCampus'), {
+                type: 'bar',
+                data: { labels: Object.keys(data.distribuicao_por_campus), datasets: [{ data: Object.values(data.distribuicao_por_campus), backgroundColor: '#047857', borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            if (chartSituacao) chartSituacao.destroy();
+            chartSituacao = new Chart(document.getElementById('graficoSituacao'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(data.distribuicao_por_situacao), datasets: [{ data: Object.values(data.distribuicao_por_situacao), backgroundColor: ['#047857', '#10b981', '#34d399', '#6ee7b7', '#065f46', '#022c22', '#38bdf8', '#fbbf24', '#f87171'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+            });
+
+            if (chartAno) chartAno.destroy();
+            chartAno = new Chart(document.getElementById('graficoAno'), {
+                type: 'line',
+                data: { labels: Object.keys(data.distribuicao_por_ano), datasets: [{ data: Object.values(data.distribuicao_por_ano), borderColor: '#047857', backgroundColor: 'rgba(4, 120, 87, 0.1)', fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // Função para preencher a lista de áreas de conhecimento
+        function renderizarListaAreas(areas) {
+            const container = document.getElementById('lista-areas');
+            container.innerHTML = '';
+
+            const entradas = Object.entries(areas);
+            if (entradas.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">Nenhuma área encontrada.</div>`;
+                return;
+            }
+
+            entradas.forEach(([area, qtd]) => {
+                const linha = document.createElement('div');
+                linha.className = "flex justify-between items-center px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-sm";
+                linha.innerHTML = `
+                    <span class="text-slate-700 dark:text-slate-300 font-medium">${area}</span>
+                    <span class="text-slate-900 dark:text-slate-100 font-semibold bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs">${qtd}</span>
+                `;
+                container.appendChild(linha);
+            });
+        }
+
+        // Função para preencher a lista de grupos de pesquisa com rolagem
+        function renderizarListaGrupos(grupos) {
+            const container = document.getElementById('lista-grupos');
+            container.innerHTML = '';
+
+            const entradas = Object.entries(grupos);
+            if (entradas.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">Nenhum grupo encontrado.</div>`;
+                return;
+            }
+
+            entradas.forEach(([grupo, qtd]) => {
+                const linha = document.createElement('div');
+                linha.className = "flex justify-between items-center px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-sm";
+                linha.innerHTML = `
+                    <span class="text-slate-700 dark:text-slate-300 font-medium pr-4">${grupo}</span>
+                    <span class="text-slate-900 dark:text-slate-100 font-semibold bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs shrink-0">${qtd}</span>
+                `;
+                container.appendChild(linha);
+            });
+        }
+
         async function carregarProjetos() {
             try {
+                const termoTitulo = document.getElementById('input-busca-titulo').value;
                 const campus = document.getElementById('filtro-campus').value;
                 const situacao = document.getElementById('filtro-situacao').value;
-
-                let url = `${API_URL}/api/projetos?limite=40`;
+                
+                let url = `${API_URL}/api/projetos?limite=50`;
+                if (termoTitulo) url += `&titulo=${encodeURIComponent(termoTitulo)}`;
                 if (campus) url += `&campus=${campus}`;
                 if (situacao) url += `&situacao=${encodeURIComponent(situacao)}`;
 
@@ -119,40 +395,51 @@
 
                 const res = await fetch(url);
                 const data = await res.json();
-                
                 tabela.innerHTML = "";
 
                 if (!data.resultados || data.resultados.length === 0) {
-                    tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Nenhum projeto encontrado com esses filtros.</td></tr>`;
-                    document.getElementById('contador-exibicao').innerText = "0 registros encontrados";
+                    tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Nenhum projeto encontrado.</td></tr>`;
+                    document.getElementById('contador-exibicao').innerText = "0 registros";
                     return;
                 }
 
                 document.getElementById('contador-exibicao').innerText = `Mostrando ${data.resultados.length} registros`;
-
-                data.resultados.forEach(projeto => {
-                    const linha = `
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="py-3 px-4 font-medium text-slate-900">${projeto.titulo}</td>
-                            <td class="py-3 px-4">${projeto.campus}</td>
-                            <td class="py-3 px-4">${projeto.edital} (${projeto.ano_edital})</td>
-                            <td class="py-3 px-4">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                                    ${projeto.situacao_atual}
-                                </span>
-                            </td>
-                        </tr>
+                data.resultados.forEach(p => {
+                    const linha = document.createElement('tr');
+                    linha.className = "hover:bg-emerald-50/50 dark:hover:bg-slate-800/50 transition cursor-pointer";
+                    linha.onclick = () => abrirDetalhes(p.id);
+                    linha.innerHTML = `
+                        <td class="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">${p.titulo}</td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${p.campus}</td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${p.edital} (${p.ano_edital})</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">${p.situacao_atual}</span></td>
                     `;
-                    tabela.innerHTML += linha;
+                    tabela.appendChild(linha);
                 });
-
             } catch (error) {
                 console.error("Erro ao carregar projetos:", error);
-                document.getElementById('tabela-projetos').innerHTML = `<tr><td colspan="4" class="py-6 text-center text-red-500">Erro ao comunicar com a API.</td></tr>`;
             }
         }
 
-        // Executa ao abrir a página
+        async function abrirDetalhes(id) {
+            const res = await fetch(`${API_URL}/api/projetos/${id}`);
+            const data = await res.json();
+            const p = data.dados;
+            document.getElementById('modal-titulo').innerText = p.titulo || "-";
+            document.getElementById('modal-campus').innerText = p.campus || "-";
+            document.getElementById('modal-situacao').innerText = p.situacao_atual || "-";
+            document.getElementById('modal-coordenador').innerText = p.coordenador || "-";
+            document.getElementById('modal-periodo').innerText = p.periodo_execucao || "-";
+            document.getElementById('modal-edital').innerText = `${p.edital} (${p.ano_edital})` || "-";
+            document.getElementById('modal-area').innerText = p.area_conhecimento || "-";
+            document.getElementById('modal-grupo').innerText = p.grupo_pesquisa || "-";
+            document.getElementById('modal-resumo').innerText = p.resumo || "Sem resumo.";
+            document.getElementById('modal-detalhes').classList.remove('hidden');
+        }
+
+        function fecharModal() { document.getElementById('modal-detalhes').classList.add('hidden'); }
+
+        // Inicialização
         carregarIndicadores();
         carregarProjetos();
     </script>

@@ -45,34 +45,35 @@ def pagina_inicial():
         "desenvolvedor": "Diretoria de Pesquisa, Pós-graduação e Inovação"
     }
 
-# 4. Rota para CADASTRAR um novo projeto no banco de dados (POST)
-@app.post("/api/projetos", status_code=201)
-def criar_projeto(projeto: ProjetoCreate, db: Session = Depends(get_db)):
-    novo_projeto = models.ProjetoModel(
-        titulo=projeto.titulo,
-        resumo=projeto.resumo,
-        edital=projeto.edital,
-        ano_edital=projeto.ano_edital,
-        coordenador=projeto.coordenador,
-        area_conhecimento=projeto.area_conhecimento,
-        grupo_pesquisa=projeto.grupo_pesquisa,
-        campus=projeto.campus,
-        periodo_execucao=projeto.periodo_execucao,
-        situacao_atual=projeto.situacao_atual
-    )
+# # 4. Rota para CADASTRAR um novo projeto no banco de dados (POST)
+# @app.post("/api/projetos", status_code=201)
+# def criar_projeto(projeto: ProjetoCreate, db: Session = Depends(get_db)):
+#     novo_projeto = models.ProjetoModel(
+#         titulo=projeto.titulo,
+#         resumo=projeto.resumo,
+#         edital=projeto.edital,
+#         ano_edital=projeto.ano_edital,
+#         coordenador=projeto.coordenador,
+#         area_conhecimento=projeto.area_conhecimento,
+#         grupo_pesquisa=projeto.grupo_pesquisa,
+#         campus=projeto.campus,
+#         periodo_execucao=projeto.periodo_execucao,
+#         situacao_atual=projeto.situacao_atual
+#     )
 
-    db.add(novo_projeto)
-    db.commit()
-    db.refresh(novo_projeto)
+#     db.add(novo_projeto)
+#     db.commit()
+#     db.refresh(novo_projeto)
 
-    return {
-        "mensagem": "Projeto cadastrado com sucesso!",
-        "dados": novo_projeto
-    }
+#     return {
+#         "mensagem": "Projeto cadastrado com sucesso!",
+#         "dados": novo_projeto
+#     }
 
 # 5. Rota para LISTAR todos os projetos salvos no banco de dados (GET) - Corrigida
 @app.get("/api/projetos")
 def listar_projetos(
+    titulo: Optional[str] = Query(None),
     campus: Optional[str] = Query(None),
     ano_edital: Optional[int] = Query(None),
     situacao: Optional[str] = Query(None),         # Nome enviado pelo frontend
@@ -81,6 +82,9 @@ def listar_projetos(
     db: Session = Depends(get_db)
 ):
     query = db.query(models.ProjetoModel)
+
+    if titulo:
+        query = query.filter(models.ProjetoModel.titulo.ilike(f"%{titulo}%"))
     
     if campus:
         query = query.filter(models.ProjetoModel.campus.ilike(f"%{campus}%"))
@@ -101,7 +105,7 @@ def listar_projetos(
         "resultados": projetos_salvos
     }
 
-# 6. Rota para indicadores e Business Intelligence (GET)
+# 5.1 Rota para indicadores e Business Intelligence (DEVE VIR ANTES da rota de ID)
 @app.get("/api/projetos/indicadores")
 def obter_indicadores(db: Session = Depends(get_db)):
     total_geral = db.query(models.ProjetoModel).count()
@@ -116,10 +120,49 @@ def obter_indicadores(db: Session = Depends(get_db)):
         func.count(models.ProjetoModel.id)
     ).group_by(models.ProjetoModel.situacao_atual).all()
 
+    por_ano = db.query(
+        models.ProjetoModel.ano_edital,
+        func.count(models.ProjetoModel.id)
+    ).group_by(models.ProjetoModel.ano_edital).order_by(models.ProjetoModel.ano_edital).all()
+
+    # Exclui o grupo "-" e pega os principais
+    por_grupo = db.query(
+        models.ProjetoModel.grupo_pesquisa,
+        func.count(models.ProjetoModel.id)
+    ).filter(
+        models.ProjetoModel.grupo_pesquisa != "-",
+        models.ProjetoModel.grupo_pesquisa != None
+    ).group_by(models.ProjetoModel.grupo_pesquisa).order_by(func.count(models.ProjetoModel.id).desc()).limit(10).all()
+
+    # Pega as áreas de conhecimento para o gráfico ficar limpo e legível
+    por_area = db.query(
+        models.ProjetoModel.area_conhecimento,
+        func.count(models.ProjetoModel.id)
+    ).filter(
+        models.ProjetoModel.area_conhecimento != "-",
+        models.ProjetoModel.area_conhecimento != None
+    ).group_by(models.ProjetoModel.area_conhecimento).order_by(func.count(models.ProjetoModel.id).desc()).limit(100).all()
+
     return {
         "metrica_geral": {
             "total_projetos": total_geral
         },
-        "distribuicao_por_campus": {campus: qtd for campus, qtd in por_campus},
-        "distribuicao_por_situacao": {situacao: qtd for situacao, qtd in por_situacao}
+        "distribuicao_por_campus": {str(k): v for k, v in por_campus},
+        "distribuicao_por_situacao": {str(k): v for k, v in por_situacao},
+        "distribuicao_por_ano": {str(k): v for k, v in por_ano},
+        "distribuicao_por_grupo": {str(k): v for k, v in por_grupo},
+        "distribuicao_por_area": {str(k): v for k, v in por_area}
+    }
+
+# 5.2 Buscar os detalhes completos de um projeto específico por ID (Fica abaixo)
+@app.get("/api/projetos/{projeto_id}")
+def obter_detalhes_projeto(projeto_id: int, db: Session = Depends(get_db)):
+    projeto = db.query(models.ProjetoModel).filter(models.ProjetoModel.id == projeto_id).first()
+
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+    return {
+        "status": "sucesso",
+        "dados": projeto
     }
