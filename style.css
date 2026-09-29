@@ -1,0 +1,16 @@
+/* Estilização da barra de rolagem para navegadores baseados em WebKit (Chrome, Edge, Safari) */
+.dark *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.dark *::-webkit-scrollbar-track {
+    background: #0f172a; /* Cor de fundo do trilho (slate-900 / slate-950) */
+    border-radius: 4px;
+}
+.dark *::-webkit-scrollbar-thumb {
+    background: #334155; /* Cor do "puxador" da barra (slate-700) */
+    border-radius: 4px;
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+    background: #475569; /* Cor do puxador ao passar o mouse (slate-600) */
+}

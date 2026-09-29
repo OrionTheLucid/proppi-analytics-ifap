@@ -45,39 +45,18 @@ def pagina_inicial():
         "desenvolvedor": "Diretoria de Pesquisa, Pós-graduação e Inovação"
     }
 
-# # 4. Rota para CADASTRAR um novo projeto no banco de dados (POST)
-# @app.post("/api/projetos", status_code=201)
-# def criar_projeto(projeto: ProjetoCreate, db: Session = Depends(get_db)):
-#     novo_projeto = models.ProjetoModel(
-#         titulo=projeto.titulo,
-#         resumo=projeto.resumo,
-#         edital=projeto.edital,
-#         ano_edital=projeto.ano_edital,
-#         coordenador=projeto.coordenador,
-#         area_conhecimento=projeto.area_conhecimento,
-#         grupo_pesquisa=projeto.grupo_pesquisa,
-#         campus=projeto.campus,
-#         periodo_execucao=projeto.periodo_execucao,
-#         situacao_atual=projeto.situacao_atual
-#     )
-
-#     db.add(novo_projeto)
-#     db.commit()
-#     db.refresh(novo_projeto)
-
-#     return {
-#         "mensagem": "Projeto cadastrado com sucesso!",
-#         "dados": novo_projeto
-#     }
-
-# 5. Rota para LISTAR todos os projetos salvos no banco de dados (GET) - Corrigida
+# 5. Rota para LISTAR todos os projetos salvos no banco de dados (GET) com os novos filtros
 @app.get("/api/projetos")
 def listar_projetos(
     titulo: Optional[str] = Query(None),
     campus: Optional[str] = Query(None),
-    ano_edital: Optional[int] = Query(None),
     situacao: Optional[str] = Query(None),         # Nome enviado pelo frontend
     situacao_atual: Optional[str] = Query(None),   # Compatibilidade com chamadas diretas
+    edital: Optional[str] = Query(None),
+    ano: Optional[str] = Query(None),              # Aceita string para tratar ano de forma flexível
+    area: Optional[str] = Query(None),
+    grupo_pesquisa: Optional[str] = Query(None),
+    coordenador: Optional[str] = Query(None),
     limite: Optional[int] = Query(100),            # Limite opcional para otimizar a velocidade
     db: Session = Depends(get_db)
 ):
@@ -87,15 +66,41 @@ def listar_projetos(
         query = query.filter(models.ProjetoModel.titulo.ilike(f"%{titulo}%"))
     
     if campus:
-        query = query.filter(models.ProjetoModel.campus.ilike(f"%{campus}%"))
-    
-    if ano_edital:
-        query = query.filter(models.ProjetoModel.ano_edital == ano_edital)
-    
+        # Se o formato vier como "Macapá (MCP)", tenta extrair o que está entre parênteses
+        if "(" in campus and ")" in campus:
+            sigla_campus = campus.split("(")[-1].replace(")", "").strip()
+            query = query.filter(models.ProjetoModel.campus.ilike(f"%{sigla_campus}%"))
+        else:
+            query = query.filter(models.ProjetoModel.campus.ilike(f"%{campus}%"))
+
     # Verifica qual dos parâmetros de situação foi preenchido
     filtro_situacao = situacao or situacao_atual
     if filtro_situacao:
         query = query.filter(models.ProjetoModel.situacao_atual.ilike(f"%{filtro_situacao}%"))
+
+    if edital:
+        query = query.filter(models.ProjetoModel.edital.ilike(f"%{edital}%"))
+        
+    if ano:
+        # Tenta filtrar tanto por igualdade exata quanto por texto contido, se aplicável
+        try:
+            ano_int = int(ano)
+            query = query.filter(models.ProjetoModel.ano_edital == ano_int)
+        except ValueError:
+            query = query.filter(models.ProjetoModel.ano_edital.cast(str).ilike(f"%{ano}%"))
+
+    if area:
+        query = query.filter(models.ProjetoModel.area_conhecimento.ilike(f"%{area}%"))
+        
+    if grupo_pesquisa:
+        termo_gp = grupo_pesquisa.lower()
+        if "sem grupo" in termo_gp or "definido" in termo_gp or termo_gp == "-":
+            query = query.filter((models.ProjetoModel.grupo_pesquisa == "-") | (models.ProjetoModel.grupo_pesquisa == None))
+        else:
+            query = query.filter(models.ProjetoModel.grupo_pesquisa.ilike(f"%{grupo_pesquisa}%"))
+
+    if coordenador:
+        query = query.filter(models.ProjetoModel.coordenador.ilike(f"%{coordenador}%"))
 
     # Aplica o limite para garantir resposta rápida na interface
     projetos_salvos = query.limit(limite).all()
