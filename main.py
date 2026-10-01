@@ -23,18 +23,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. Definição do Esquema (Pydantic) para validação dos dados de entrada
-class ProjetoCreate(BaseModel):
-    titulo: str
-    resumo: Optional[str] = "-"
-    edital: Optional[str] = "-"
-    ano_edital: Optional[int] = 0
-    coordenador: Optional[str] = "-"
-    area_conhecimento: Optional[str] = "-"
-    grupo_pesquisa: Optional[str] = "-"
-    campus: str
-    periodo_execucao: Optional[str] = "-"
-    situacao_atual: Optional[str] = "-"
+# # 2. Definição do Esquema (Pydantic) para validação dos dados de entrada
+# class ProjetoCreate(BaseModel):
+#     titulo: str
+#     resumo: Optional[str] = "-"
+#     edital: Optional[str] = "-"
+#     ano_edital: Optional[int] = 0
+#     coordenador: Optional[str] = "-"
+#     area_conhecimento: Optional[str] = "-"
+#     grupo_pesquisa: Optional[str] = "-"
+#     campus: str
+#     periodo_execucao: Optional[str] = "-"
+#     situacao_atual: Optional[str] = "-"
 
 # 3. Criando a rota principal (Endpoint raiz "/")
 @app.get("/")
@@ -66,12 +66,34 @@ def listar_projetos(
         query = query.filter(models.ProjetoModel.titulo.ilike(f"%{titulo}%"))
     
     if campus:
-        # Se o formato vier como "Macapá (MCP)", tenta extrair o que está entre parênteses
+        # Dicionário de equivalência para mapear buscas parciais para as siglas do IFAP
+        MAPEAMENTO_CAMPUS = {
+            "macapa": "MCP", "macapa": "MCP", "mcp": "MCP",
+            "laranjal": "LRJ", "jari": "LRJ", "lrj": "LRJ",
+            "porto": "PTG", "grande": "PTG", "ptg": "PTG",
+            "santana": "STN", "stn": "STN",
+            "oiapoque": "OPQ", "opq": "OPQ",
+            "reitoria": "RE", "re": "RE",
+            "pedra": "PBA", "branca": "PBA", "amapari": "PBA", "pba": "PBA"
+        }
+
+        # 1. Se o usuário selecionou da lista no formato completo "Macapá (MCP)"
         if "(" in campus and ")" in campus:
-            sigla_campus = campus.split("(")[-1].replace(")", "").strip()
-            query = query.filter(models.ProjetoModel.campus.ilike(f"%{sigla_campus}%"))
+            sigla = campus.split("(")[-1].replace(")", "").strip()
+            query = query.filter(models.ProjetoModel.campus.ilike(f"%{sigla}%"))
         else:
-            query = query.filter(models.ProjetoModel.campus.ilike(f"%{campus}%"))
+            termo = campus.lower().strip()
+            sigla_encontrada = MAPEAMENTO_CAMPUS.get(termo)
+
+            # 2. Se o que foi digitado (ex: "macap") mapear para uma sigla ("MCP"),
+            # busca no banco POR AMBOS (pelo texto digitado OU pela sigla)
+            if sigla_encontrada:
+                query = query.filter(
+                    (models.ProjetoModel.campus.ilike(f"%{campus}%")) |
+                    (models.ProjetoModel.campus.ilike(f"%{sigla_encontrada}%"))
+                )
+            else:
+                query = query.filter(models.ProjetoModel.campus.ilike(f"%{campus}%"))
 
     # Verifica qual dos parâmetros de situação foi preenchido
     filtro_situacao = situacao or situacao_atual

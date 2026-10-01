@@ -1,6 +1,10 @@
 const API_URL = "http://127.0.0.1:8000";
 let chartCampus = null, chartSituacao = null, chartAno = null;
 
+let temporizadorDebounceTitulo = null;
+let indiceSelecaoTitulo = -1;
+let temporizadorFiltros = null;
+
 const inputAno = document.getElementById('filtro-ano');
 const btnLimparAno = document.getElementById('btn-limpar-ano');
 
@@ -26,37 +30,115 @@ const inputCoordenador = document.getElementById('filtro-coordenador');
 const containerSugestoesCoordenador = document.getElementById('sugestoes-coordenador');
 const btnLimparCoordenador = document.getElementById('btn-limpar-coordenador');
 
-// Monitorar input do Campus
+const inputBusca = document.getElementById('input-busca-titulo');
+const containerSugestoes = document.getElementById('sugestoes-busca');
+const btnLimparBusca = document.getElementById('btn-limpar-busca');
+
+const containerSugestoesCampus = document.getElementById('sugestoes-campus');
+const containerSugestoesSituacao = document.getElementById('sugestoes-situacao');
+
+
+// Função para renderizar as sugestões de Campus
+function renderizarSugestoesCampus(filtro = '') {
+    containerSugestoesCampus.innerHTML = '';
+    const termo = filtro.toLowerCase().trim();
+    
+    // Filtra as opções baseadas no que foi digitado
+    const filtrados = OPCOES_CAMPUS.filter(c => c.toLowerCase().includes(termo));
+
+    if (filtrados.length === 0) {
+        containerSugestoesCampus.classList.add('hidden');
+        return;
+    }
+
+    filtrados.forEach(nomeCampus => {
+        const item = document.createElement('div');
+        item.className = "p-2.5 hover:bg-emerald-50 dark:hover:bg-slate-800/80 cursor-pointer text-sm text-slate-700 dark:text-slate-200 transition";
+        item.innerText = nomeCampus;
+        
+        item.onclick = () => {
+            inputCampus.value = nomeCampus;
+            btnLimparCampus.classList.remove('hidden');
+            containerSugestoesCampus.classList.add('hidden');
+            carregarProjetos();
+        };
+        
+        containerSugestoesCampus.appendChild(item);
+    });
+
+    containerSugestoesCampus.classList.remove('hidden');
+}
+
+// Eventos do campo de Campus
+inputCampus.addEventListener('focus', () => renderizarSugestoesCampus(inputCampus.value));
 inputCampus.addEventListener('input', function() {
     if (this.value.trim().length > 0) {
         btnLimparCampus.classList.remove('hidden');
     } else {
         btnLimparCampus.classList.add('hidden');
     }
-    carregarProjetos();
+    
+    renderizarSugestoesCampus(this.value);
+    
+    clearTimeout(temporizadorFiltros);
+    temporizadorFiltros = setTimeout(() => carregarProjetos(), 300);
 });
 
-function limparFiltroCampus() {
-    inputCampus.value = '';
-    btnLimparCampus.classList.add('hidden');
-    carregarProjetos();
+// Listas fixas de opções institucionais
+const OPCOES_CAMPUS = [
+    "Macapá (MCP)", "Laranjal do Jari (LRJ)", "Porto Grande (PTG)",
+    "Santana (STN)", "Oiapoque (OPQ)", "Reitoria (RE)", "Pedra Branca do Amapari (PBA)"
+];
+
+// Função para renderizar as sugestões de Situação
+function renderizarSugestoesSituacao(filtro = '') {
+    containerSugestoesSituacao.innerHTML = '';
+    const termo = filtro.toLowerCase().trim();
+    
+    const filtrados = OPCOES_SITUACAO.filter(s => s.toLowerCase().includes(termo));
+
+    if (filtrados.length === 0) {
+        containerSugestoesSituacao.classList.add('hidden');
+        return;
+    }
+
+    filtrados.forEach(nomeSituacao => {
+        const item = document.createElement('div');
+        item.className = "p-2.5 hover:bg-emerald-50 dark:hover:bg-slate-800/80 cursor-pointer text-sm text-slate-700 dark:text-slate-200 transition";
+        item.innerText = nomeSituacao;
+        
+        item.onclick = () => {
+            inputSituacao.value = nomeSituacao;
+            btnLimparSituacao.classList.remove('hidden');
+            containerSugestoesSituacao.classList.add('hidden');
+            carregarProjetos();
+        };
+        
+        containerSugestoesSituacao.appendChild(item);
+    });
+
+    containerSugestoesSituacao.classList.remove('hidden');
 }
 
-// Monitorar input da Situação
+// Eventos do campo de Situação
+inputSituacao.addEventListener('focus', () => renderizarSugestoesSituacao(inputSituacao.value));
 inputSituacao.addEventListener('input', function() {
     if (this.value.trim().length > 0) {
         btnLimparSituacao.classList.remove('hidden');
     } else {
         btnLimparSituacao.classList.add('hidden');
     }
-    carregarProjetos();
+    
+    renderizarSugestoesSituacao(this.value);
+    
+    clearTimeout(temporizadorFiltros);
+    temporizadorFiltros = setTimeout(() => carregarProjetos(), 300);
 });
 
-function limparFiltroSituacao() {
-    inputSituacao.value = '';
-    btnLimparSituacao.classList.add('hidden');
-    carregarProjetos();
-}
+const OPCOES_SITUACAO = [
+    "Concluído", "Em execução", "Em edição", "Enviado",
+    "Não Enviado", "Cancelado", "Inativado", "Não aceito", "Não selecionado"
+];
 
 // Monitorar input do Ano
 inputAno.addEventListener('input', function() {
@@ -65,7 +147,11 @@ inputAno.addEventListener('input', function() {
     } else {
         btnLimparAno.classList.add('hidden');
     }
-    carregarProjetos();
+    
+    clearTimeout(temporizadorFiltros);
+    temporizadorFiltros = setTimeout(() => {
+        carregarProjetos();
+    }, 300);
 });
 
 function limparFiltroAno() {
@@ -83,7 +169,7 @@ inputEdital.addEventListener('input', async function() {
         btnLimparEdital.classList.add('hidden');
     }
 
-    if (termo.length < 2) {
+    if (termo.length < 1) {
         containerSugestoesEdital.classList.add('hidden');
         containerSugestoesEdital.innerHTML = '';
         return;
@@ -136,7 +222,7 @@ inputArea.addEventListener('input', async function() {
         btnLimparArea.classList.add('hidden');
     }
 
-    if (termo.length < 2) {
+    if (termo.length < 1) {
         containerSugestoesArea.classList.add('hidden');
         containerSugestoesArea.innerHTML = '';
         return;
@@ -190,7 +276,7 @@ inputGrupo.addEventListener('input', async function() {
         btnLimparGrupo.classList.add('hidden');
     }
 
-    if (termo.length < 2) {
+    if (termo.length < 1) {
         containerSugestoesGrupo.classList.add('hidden');
         containerSugestoesGrupo.innerHTML = '';
         return;
@@ -250,7 +336,7 @@ inputCoordenador.addEventListener('input', async function() {
         btnLimparCoordenador.classList.add('hidden');
     }
 
-    if (termo.length < 2) {
+    if (termo.length < 1) {
         containerSugestoesCoordenador.classList.add('hidden');
         containerSugestoesCoordenador.innerHTML = '';
         return;
@@ -294,10 +380,6 @@ function limparBuscaCoordenador() {
     carregarProjetos();
 }
 
-const inputBusca = document.getElementById('input-busca-titulo');
-const containerSugestoes = document.getElementById('sugestoes-busca');
-const btnLimparBusca = document.getElementById('btn-limpar-busca');
-
 // Configuração do Modo Escuro global
 function alternarDarkMode() {
     const html = document.documentElement;
@@ -327,54 +409,142 @@ async function carregarIndicadores() {
     }
 }
 
-inputBusca.addEventListener('input', async function() {
-    const termo = this.value.trim();
-    if (termo.length > 0) {
-        btnLimparBusca.classList.remove('hidden');
-    } else {
-        btnLimparBusca.classList.add('hidden');
-    }
+// Listeners e Lógica Padronizada para a Busca por Título
+if (inputBusca) {
+    // Evento disparado enquanto o usuário digita
+    inputBusca.addEventListener('input', function() {
+        const termo = this.value.trim();
 
-    if (termo.length < 2) {
-        containerSugestoes.classList.add('hidden');
-        containerSugestoes.innerHTML = '';
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/api/projetos?titulo=${encodeURIComponent(termo)}&limite=5`);
-        const data = await res.json();
-        containerSugestoes.innerHTML = '';
-
-        if (!data.resultados || data.resultados.length === 0) {
+        // 1. Controla a exibição do botão 'X' de limpar
+        if (termo.length > 0) {
+            btnLimparBusca.classList.remove('hidden');
+        } else {
+            btnLimparBusca.classList.add('hidden');
             containerSugestoes.classList.add('hidden');
+            containerSugestoes.innerHTML = '';
+            // Se o usuário apagou todo o texto (via Backspace/Delete), recarrega a tabela automaticamente
+            carregarProjetos();
             return;
         }
 
-        data.resultados.forEach(p => {
-            const item = document.createElement('div');
-            item.className = "p-3 hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer text-sm text-slate-700 dark:text-slate-200 transition";
-            item.innerText = p.titulo;
-            item.onclick = () => {
-                inputBusca.value = p.titulo;
-                btnLimparBusca.classList.remove('hidden');
+        // 2. Exige apenas 1 letra, mostrando a caixa de sugestões
+        if (termo.length < 1) {
+            containerSugestoes.classList.add('hidden');
+            containerSugestoes.innerHTML = '';
+            return;
+        }
+
+        // 3. Aplica o DEBOUNCE: Cancela a requisição anterior se o usuário continuar digitando
+        clearTimeout(temporizadorDebounceTitulo);
+
+        // Aguarda 350 milissegundos após a última tecla antes de chamar a API
+        temporizadorDebounceTitulo = setTimeout(async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/projetos?titulo=${encodeURIComponent(termo)}&limite=5`);
+                const data = await res.json();
+                containerSugestoes.innerHTML = '';
+
+                if (!data.resultados || data.resultados.length === 0) {
+                    containerSugestoes.classList.add('hidden');
+                    return;
+                }
+
+                // Preenche a caixa flutuante com as sugestões encontradas
+                data.resultados.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = "p-3 hover:bg-emerald-50 dark:hover:bg-slate-800 cursor-pointer text-sm text-slate-700 dark:text-slate-200 transition";
+                    item.innerText = p.titulo;
+                    
+                    // Ação ao clicar em uma sugestão da lista
+                    item.onclick = () => {
+                        inputBusca.value = p.titulo;
+                        btnLimparBusca.classList.remove('hidden');
+                        containerSugestoes.classList.add('hidden');
+                        carregarProjetos(); // Atualiza a tabela imediatamente
+                    };
+                    containerSugestoes.appendChild(item);
+                });
+                indiceSelecaoTitulo = -1;
+                containerSugestoes.classList.remove('hidden');
+            } catch (error) {
+                console.error("Erro ao buscar sugestões de título:", error);
+            }
+        }, 350);
+    });
+
+    // Evento de navegação via teclado no input de título
+    inputBusca.addEventListener('keydown', function(e) {
+        // Captura todas as divs filhas (os itens de sugestão) dentro do container
+        const itens = containerSugestoes.querySelectorAll('div');
+        const estaVisivel = !containerSugestoes.classList.contains('hidden');
+
+        // 1. Seta para BAIXO
+        if (e.key === 'ArrowDown') {
+            if (!estaVisivel || itens.length === 0) return;
+            e.preventDefault(); // Impede o cursor do texto de ir para o final da frase
+            
+            indiceSelecaoTitulo++;
+            if (indiceSelecaoTitulo >= itens.length) {
+                indiceSelecaoTitulo = 0; // Volta para o primeiro item
+            }
+            atualizarDestaqueSugestaoTitulo(itens);
+        } 
+        
+        // 2. Seta para CIMA
+        else if (e.key === 'ArrowUp') {
+            if (!estaVisivel || itens.length === 0) return;
+            e.preventDefault(); // Impede o cursor do texto de ir para o início da frase
+            
+            indiceSelecaoTitulo--;
+            if (indiceSelecaoTitulo < 0) {
+                indiceSelecaoTitulo = itens.length - 1; // Vai para o último item
+            }
+            atualizarDestaqueSugestaoTitulo(itens);
+        } 
+        
+        // 3. Tecla ENTER
+        else if (e.key === 'Enter') {
+            // Se a caixa estiver aberta e o usuário selecionou algo com as setas
+            if (estaVisivel && indiceSelecaoTitulo >= 0 && itens[indiceSelecaoTitulo]) {
+                e.preventDefault();
+                // Simula o clique do mouse no item destacado
+                itens[indiceSelecaoTitulo].click();
+            } else {
+                // Caso contrário, apenas fecha e realiza a busca normal
+                clearTimeout(temporizadorDebounceTitulo);
                 containerSugestoes.classList.add('hidden');
                 carregarProjetos();
-            };
-            containerSugestoes.appendChild(item);
-        });
-
-        containerSugestoes.classList.remove('hidden');
-    } catch (error) {
-        console.error("Erro ao buscar sugestões:", error);
-    }
-});
+            }
+        } 
+        
+        // 4. Tecla ESCAPE (ESC)
+        else if (e.key === 'Escape') {
+            containerSugestoes.classList.add('hidden');
+            indiceSelecaoTitulo = -1;
+        }
+    });
+}
 
 function limparBuscaTexto() {
     inputBusca.value = '';
     btnLimparBusca.classList.add('hidden');
     containerSugestoes.classList.add('hidden');
     carregarProjetos();
+}
+
+// Função auxiliar para aplicar/remover a cor de destaque no item ativo
+function atualizarDestaqueSugestaoTitulo(itens) {
+    itens.forEach((item, index) => {
+        if (index === indiceSelecaoTitulo) {
+            // Aplica destaque visual (verde claro no modo light, slate no modo dark)
+            item.classList.add('bg-emerald-100', 'dark:bg-slate-700', 'font-semibold');
+            // Rola a caixinha automaticamente caso o item esteja fora da área visível
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            // Remove o destaque dos outros itens
+            item.classList.remove('bg-emerald-100', 'dark:bg-slate-700', 'font-semibold');
+        }
+    });
 }
 
 // Função para limpar todos os filtros de uma vez
@@ -407,6 +577,12 @@ function limparFiltros() {
 
 // Fechar caixinhas flutuantes ao clicar fora
 document.addEventListener('click', function(e) {
+    if (!inputCampus.contains(e.target) && !containerSugestoesCampus.contains(e.target)) {
+        containerSugestoesCampus.classList.add('hidden');
+    }
+    if (!inputSituacao.contains(e.target) && !containerSugestoesSituacao.contains(e.target)) {
+        containerSugestoesSituacao.classList.add('hidden');
+    }
     if (!inputEdital.contains(e.target) && !containerSugestoesEdital.contains(e.target)) {
         containerSugestoesEdital.classList.add('hidden');
     }
@@ -507,8 +683,9 @@ async function carregarProjetos() {
         if (grupo) url += `&grupo_pesquisa=${encodeURIComponent(grupo)}`;
         if (coordenador) url += `&coordenador=${encodeURIComponent(coordenador)}`;
 
+        // Deixa a tabela semitransparente enquanto busca:
         const tabela = document.getElementById('tabela-projetos');
-        tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">A processar dados...</td></tr>`;
+        tabela.classList.add('opacity-40', 'pointer-events-none', 'transition-opacity');
 
         const res = await fetch(url);
         const data = await res.json();
@@ -532,6 +709,8 @@ async function carregarProjetos() {
                 <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 whitespace-nowrap">${p.situacao_atual}</span></td>
             `;
             tabela.appendChild(linha);
+            // Remove o efeito de transparência quando os dados terminarem de carregar
+            tabela.classList.remove('opacity-40', 'pointer-events-none');
         });
     } catch (error) {
         console.error("Erro ao carregar projetos:", error);

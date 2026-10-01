@@ -124,15 +124,8 @@
                               autocomplete="off">
                        <button type="button" onclick="limparFiltroCampus()" class="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold hidden" id="btn-limpar-campus" title="Apagar campus">&times;</button>
                    </div>
-                   <datalist id="lista-campus">
-                       <option value="Macapá (MCP)">
-                       <option value="Laranjal do Jari (LRJ)">
-                       <option value="Porto Grande (PTG)">
-                       <option value="Santana (STN)">
-                       <option value="Oiapoque (OPQ)">
-                       <option value="Reitoria (RE)">
-                       <option value="Pedra Branca do Amapari (PBA)">
-                   </datalist>
+                   <!-- Substituto do Datalist do Campus -->
+<div id="sugestoes-campus" class="absolute left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-20 divide-y divide-slate-100 dark:divide-slate-800"></div>
                </div>
 
                <!-- 2. Situação (Input com Botão Limpar invertido) -->
@@ -144,17 +137,8 @@
                               autocomplete="off">
                        <button type="button" onclick="limparFiltroSituacao()" class="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold hidden" id="btn-limpar-situacao" title="Apagar situação">&times;</button>
                    </div>
-                   <datalist id="lista-situacoes">
-                       <option value="Concluído">
-                       <option value="Em execução">
-                       <option value="Em edição">
-                       <option value="Enviado">
-                       <option value="Não Enviado">
-                       <option value="Cancelado">
-                       <option value="Inativado">
-                       <option value="Não aceito">
-                       <option value="Não selecionado">
-                   </datalist>
+                   <!-- Substituto do Datalist da Situação -->
+<div id="sugestoes-situacao" class="absolute left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-20 divide-y divide-slate-100 dark:divide-slate-800"></div>
                </div>
 
               <!-- 3. Edital (Busca Inteligente com Sugestões Dinâmicas) -->
