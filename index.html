@@ -28,7 +28,7 @@
         </button>
     </header>
 
-    <main class="max-w-7xl mx-auto p-6 space-y-6">
+    <main class="w-[96%] max-w-[1800px] mx-auto p-4 md:p-6 space-y-6">
 
         <!-- Bloco de Indicador Geral (KPI) -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -47,11 +47,67 @@
         <!-- Seção de Gráficos e Indicadores -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- 1. Projetos por Campus -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
-                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Projetos por Campus</h2>
-                <div class="relative h-64 flex items-center justify-center">
-                    <canvas id="graficoCampus"></canvas>
+<!-- Projetos por Campus (Mapa IBGE) -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm transition-all flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Projetos por Campus</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Distribuição territorial e cobertura institucional (malha IBGE)</p>
+                    </div>
+                    <span class="text-xs font-medium px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50">Amapá</span>
+                </div>
+
+                <style>
+                    @keyframes pulso-campus {
+    0%   { transform: scale(1);   opacity: .55; }
+    100% { transform: scale(2.8); opacity: 0; }
+}
+#mapa-wrap .pulso-campus { animation: pulso-campus 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+    #mapa-wrap .pulso-campus { animation: none; }
+}
+                    #mapa-wrap .topo-a{stop-color:#6ee7b7} #mapa-wrap .topo-b{stop-color:#10b981} #mapa-wrap .topo-c{stop-color:#047857}
+                    .dark #mapa-wrap .topo-a{stop-color:#34d399} .dark #mapa-wrap .topo-b{stop-color:#059669} .dark #mapa-wrap .topo-c{stop-color:#065f46}
+                    #mapa-wrap .mapa-lado{fill:#047857;stroke:#047857} .dark #mapa-wrap .mapa-lado{fill:#022c22;stroke:#022c22}
+                    #mapa-wrap .mapa-borda{stroke:#d1fae5} .dark #mapa-wrap .mapa-borda{stroke:#6ee7b7}
+                </style>
+
+                <div id="mapa-container" class="relative w-full h-[550px] flex items-center justify-center rounded-xl border border-slate-200/60 dark:border-slate-800/80 overflow-hidden select-none bg-gradient-to-b from-sky-50 to-slate-50 dark:from-slate-950 dark:to-slate-900">
+                    <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+                    <!-- Caixa com a proporção exata do viewBox do IBGE (50005 x 57450) -->
+                    <div id="mapa-wrap" class="relative z-10 -mt-12 mr-26" style="width:min(100%,420px);aspect-ratio:50005/57450;">
+                        <!-- viewBox = limites do IBGE em décimos de milésimo de grau: x = lon*10000, y = -lat*10000 -->
+                        <svg viewBox="-548763 -45088 50005 57450" class="absolute inset-0 w-full h-full overflow-visible" role="img" aria-label="Mapa do Amapá">
+                            <defs>
+                                <path id="amapa-shape" vector-effect="non-scaling-stroke" d="M-506840,21437l-13,67l45,167l-58,240l-182,330l-78,87l-74,35l-45,80l-8,84l34,253l-7,97l-86,131l-96,82l-45,129l12,78l-25,233l-39,104l-70,55l11,176l-51,124l-66,84l14,222l-37,239l-136,177l-40,149l-62,125l-76,41l-147,4l-105,98l34,148l-95,121l14,142l-65,242l-91,133l30,96l-4,187l-30,206l-113,49l18,113l-23,71l-86,137l-72,70l-51,-1l-58,264l28,126l-13,182l-26,48l-150,113l-31,-6l-8,250l-33,82l-132,132l-98,45l-125,100l-26,93l-66,101l45,79l-17,163l24,139l-24,86l-89,120l-158,335l-77,77l-51,211l-36,40l2,135l-65,353l-86,159l-77,102l-61,143l3,125l59,38l-33,106l40,73l-110,169l-65,44l-126,271l-2,155l24,57l-9,120l75,94l32,311l-4,60l-108,269l-54,71l-87,238l-74,166l-41,150l-173,471l-117,444l-14,111l-58,201l-39,248l82,109l101,190l39,194l1,198l52,398l-44,320l-22,330l-24,74l30,111l-25,464l-9,491l29,259l11,195l-17,103l25,167l-30,82l46,210l41,447l-44,150l-70,85l-98,45l-220,-44l-269,54l-285,57l-11,77l12,240l-17,114l37,180l-11,228l26,75l-50,169l-6,138l-25,44l-47,309l-99,255l9,38l-189,438l-289,415l-68,118l-117,130l-75,177l-114,126l-7,37l-138,109l-224,237l-183,253l-137,95l-145,164l-193,170l-88,119l-170,120l-106,101l-239,169l-402,332l-258,104l-1259,612l-244,-381l-74,-169l56,-303l-102,-294l-52,-280l24,-334l76,-229l199,-425l262,-417l42,-158l-30,-147l-94,-91l-37,-97l-19,-190l-7,-240l-46,-170l-55,-368l-84,-256l-196,-178l-265,-117l-65,-64l-79,-21l-129,-78l-162,-66l-126,-93l-62,-81l-113,-76l-65,-124l-9,-176l25,-41l-6,-172l-96,-229l-77,-153l-145,-138l-92,-54l-11,-92l-135,-80l-87,-96l-108,-83l-76,-108l-56,-136l-44,-51l-103,-18l-17,-67l-118,35l18,-123l-86,-49l-133,9l-87,-146l56,-80l49,-136l-41,-84l13,-57l-61,-94l-106,-28l-137,31l-65,-21l-168,-149l-51,-202l-88,-132l-20,-114l16,-66l-66,-112l44,-78l3,-82l-138,-177l-166,-154l-138,-230l-64,-134l-217,-383l-100,-15l6,-111l-97,-142l-66,-27l-72,-145l-12,-133l-135,-107l-131,-274l-75,-109l-91,-191l-117,-181l-8,-44l-116,-203l-76,-68l-72,-174l-94,-66l-34,-101l10,-79l-140,-146l-74,-101l-127,-234l-104,-133l-91,-33l-74,135l-104,21l-30,-74l-125,-107l-165,-85l-9,-92l-93,-172l33,-218l-39,-52l-92,22l-170,-82l-59,-157l-54,-69l94,-59l-30,-40l-149,6l-21,-121l132,-55l-69,-91l-4,-107l73,-90l113,-82l-8,-92l-43,-52l-135,-237l-70,-194l-96,-59l-43,-218l-48,-44l28,-71l-22,-78l-125,-255l-92,-27l26,-74l-53,-89l68,-140l95,-37l-114,-156l-298,-50l-157,-295l-94,-136l-81,-222l-204,-340l-43,-121l23,-183l-65,-27l28,-69l-122,-251l-86,-75l-67,-218l-136,-172l9,-57l-79,-125l-20,-125l-127,24l-84,-51l-51,-94l42,-83l58,-3l32,-89l-76,-111l139,-75l41,-45l47,-165l-106,-153l9,-85l-136,29l-101,-148l48,-127l55,-16l-14,-115l-135,-46l-59,-74l-176,-165l-89,-171l-192,4l-49,-60l1,-76l103,-66l-51,-99l-203,-10l1,-45l-98,-80l17,-138l-123,-142l29,-84l-65,-217l-133,-51l-123,-16l-239,-86l-89,-87l22,-62l-230,-68l-93,-81l-294,-109l-252,-184l-149,-49l-236,-35l40,-99l-147,-23l-11,-153l-186,-55l-3,-116l-44,-82l-82,-55l-21,-93l-135,-250l-32,-101l-144,39l-69,-20l-90,39l-45,-44l8,-92l-185,-77l-28,24l-157,-32l-25,-37h-102l-90,80l-80,30l-73,-12l-61,38l-206,34l-140,46l-116,98l-199,128l-150,16l-185,-25l-207,1l-244,-72l-123,-5l-98,-50h-232l-123,-56l-78,42l-46,76l-97,22l-38,-86l-90,-13l-23,-62l-76,-27l-74,27l-63,-55l-78,106l70,82l37,204l89,-15l67,121l10,171l64,-64l157,124l81,35l-52,130l-112,-23l-162,32l12,118l-166,108l-53,109l-148,1l-105,78l-84,124l-5,97l-63,73l-102,-26l-47,91l-101,11l-117,-54l0,-155l-76,-132l-96,-28l-86,-94l-131,-2l-62,-107l-102,-3l-65,-74l-118,-19l-68,-76l-154,65l-55,42l-84,-22l41,-119l112,-68l-43,-90l-144,-44l-123,82l-100,-39l-145,10l-103,45l-113,-88l-184,6l-177,132l-106,13l-60,-39l-117,105l-22,51l-119,25l-93,-86l-69,62l-301,-1l30,179l-79,-27l-27,57l-74,1l-109,-43l-40,-66l-93,177l-122,-32l-58,34l-135,19l-56,-54l-162,38l3,97l78,24l26,131l74,25l52,86l-130,132l-63,-34l32,161l-164,1l-92,38l-61,-53l-108,-9l-68,-80l-87,3l-59,-75l-77,-30l-14,-121l-182,-12l-42,-76l53,-55l66,19l71,-30l31,-100l-91,6l-52,-42l-147,-41l-85,10l-72,97l-63,-84l-54,47h-126l-59,-122l20,-53l-200,-248l-86,32l4,135h-136l-44,64l-59,-39l33,-70l-55,-81l64,-187l-70,-69l3,-101l-106,29l-142,-22l-77,-107l-151,50l-112,-74l-1879,-512l-2475,311l-1651,1273l-605,-102l-299,344l58,498l14,356l-591,247l-534,-325l-749,-53l-40,-70l16,-114l70,-64l16,-60l235,-229l350,-383l25,-125l89,-112l4,-85l-62,-18l-52,-98l43,-78l-62,-37l-23,-200l89,-124l36,-84l123,-133l50,-89l65,-31l45,-119l75,-61l3,-103l-67,-44l16,-67l-153,-67l-3,-101l-61,-79l-89,-61l-78,-112l27,-66l-56,-95l45,-149l-91,-71l58,-123l18,-121l-59,-54l-7,-82l68,-91l-13,-163l35,-116l88,-90l40,-95l101,-77l119,-34l-2,-116l132,-104l1,-139l-76,-99l-55,-154l-12,-93l83,-201l-16,-131l44,-23l60,-145l-1,-247l47,-87l46,6l54,-181l-122,-106l38,-84l-75,-80l17,-71l63,-43l16,-106l187,-19l24,-26l285,22l30,-56l132,10l78,-32l196,60l80,-31l155,87l22,33l142,-13l98,53l76,-44l132,-25l53,22l116,-56l337,-72l65,-111l116,-26l38,-51l68,28l59,-42l103,44l143,2l7,42l134,26l226,-42l99,63l68,-38l140,32l165,-146l83,122l93,17l181,-50l9,-67l66,-7l27,-69l119,40l62,-63l65,-7l165,-130l72,22l103,-97l-59,-85l143,27l49,-57l69,-164l-10,-82l99,37l70,-20l24,-58l143,-1l17,-107l91,-85l92,-24l92,-88l34,-138l101,-38l-9,112l25,145l74,37l23,-94l72,-40l120,-12l44,-35l88,13l13,-121l96,-14l-7,-100l104,-97l5,-56l-88,-49l86,-60l42,-94l75,65l92,-37l-85,-93l-71,-168l30,-70l157,-7l142,-242l-44,-126l38,-82l-35,-135l107,-63l-14,92l102,61l68,-63l104,-2l120,117l45,-40l109,-23l43,159l73,42l68,-27l67,-125l-35,-99l12,-113l71,-88l85,42l101,-67l90,121l126,-73l4,-91l105,33l84,-46l93,-12l-47,-78l2,-78l-80,-39l33,-96l126,59l50,146l54,15l161,-33l28,-117l125,-32l34,-85l-66,-120l-39,-119l50,-71l65,68l116,-15l97,-44l107,47l4,-120l131,-4l72,-43l165,22l-4,102l-153,118l71,81l117,16l155,-103l48,-103l156,-70l56,125l74,-138l228,-83l9,95l160,96l-6,125l-81,103l69,36l67,-52l106,-18l41,-67l-108,-110l-68,-107l19,-124l100,-61l140,79l45,-14l25,-119l99,-5l57,32l23,179l74,136l106,-12l33,-64l4,-106l-42,-83l16,-163l-179,-189l104,-88l91,-12l87,124l206,38l174,70l110,-109l135,-100l52,25l16,99l154,-12l100,-76l47,-103l4,-82l-107,-68l-126,-24l-59,-66l34,-160l65,-103l151,-25l71,-42l72,-123l-73,-160l-157,-168l10,-70l63,-91l138,-7l222,130l100,20l193,126l228,-66l121,-6l123,106l4,-168l87,-231l144,-89l69,-146l-7,-89l-53,-164l-54,-50l-138,-16l-134,63l-97,-24l-90,-77l-58,-99l33,-233l1,-330l31,-62l167,-116l13,-116l72,-47l52,-96l-76,-139l31,-274l93,-31l67,-73l-20,-103l21,-151l-30,-92l22,-181l120,-101l381,-231l65,-78l329,-163l197,-130l148,-133l88,-114l39,-94l43,-13l154,-144l208,-116l440,-292l18,-132l39,-77l126,-105l146,-79l63,-97l42,-196l70,-67l158,43l89,-93l89,-41l6,-45l-87,-179l-8,-146l-75,-169l-76,-71l-38,-83l-132,-144l-62,-238l-13,-131l66,-113l-2,-104l-37,-98l-106,-94l31,-87l-102,-201l103,-55l44,-80l-88,-273l-38,-72l25,-135l60,-119l-20,-218l-141,-168l3,-46l86,-145l151,-107l79,-169l69,-90l-1,-168l52,-130l195,-97l35,-82l135,-161l8,-32l-118,-217l54,-219l62,-201l109,-67l133,-191l69,-28l111,-94l26,-83l99,-130l31,-162l72,-151l182,-97l-39,-353l113,-158l142,-51l61,-54l75,-149l-14,-188l22,-221l61,-274l90,-134l108,-339l119,-261l46,-191l287,-126l64,4l158,108l101,10l202,-75l67,-95l87,-264l196,-125l561,-390l39,-85l21,-161l142,-144l240,-161l153,-1l91,-69l76,-146l24,-257l-33,-122l-109,-198l-26,-152l13,-57l162,-222l19,-86l-80,-140l-59,-45l-96,-170l117,-180l-48,-129l4,-63l132,-199l149,-88l-25,-131l298,-467l108,-89l162,-11l141,98l131,65l95,22l411,23l71,-62l49,-88l57,-240l43,-65l31,-318l-24,-137l21,-141l87,-136l43,-185l-5,-194l-39,-161l-164,-287l-46,-206l58,-129l-81,-103l-167,-172l-20,-150l63,-69l138,-8l126,25l143,72l125,28l210,82l78,82l112,-39l121,-136l123,-69l75,-80l112,-192l-35,-308l-38,-40l-182,-24l-110,-98l-10,-147l31,-66l108,-93l61,-127l5,-268l37,-103l-23,-163l-107,-122l-8,-103l82,-46l136,80l63,11l171,-104l249,-86l62,-72l132,-358l58,-103l202,17l170,-33l104,-74l121,-36l143,3l82,23l121,-3l97,-61l143,-27l269,25l89,29l165,-45l157,-147l264,26l37,-38l98,-331l-27,-116l-15,-203l33,-61l89,-68l283,-81l103,-2l87,56l39,163l-154,214l-10,70l89,90l142,68l241,22l257,-39l41,73l-18,154l-52,144l6,57l81,76l103,8l94,-52l36,-86l-39,-187l14,-104l56,-55l95,2l47,61l59,151l78,135l81,11l145,-185l112,-105l152,-43l375,66l354,26l206,95l101,72l230,262l459,411l91,99l122,240l26,263l-42,153l2,174l-60,555l17,163l34,159l-11,256l27,224l7,213l21,47l26,230l43,102l78,92l92,178l282,478l139,193l79,149l167,259l239,273l323,298l131,131l111,142l142,121l142,83l85,113l204,211l253,399l41,114l47,253l70,123l129,96l80,97l172,174l161,195l5,93l75,403l67,189l157,258l91,100l205,112l129,245l296,411l28,64l162,244l60,126l186,250l83,16l364,130l203,8l330,57l260,86l116,25l119,73l293,356l223,328l98,104l106,38l118,259l103,124l286,209l251,134l492,131l229,51l642,178l228,89l185,95l247,165l178,146l328,234l234,237l212,231l168,139l71,37l34,10l165,196l268,425l137,333l154,266l49,214l113,238l37,175l146,183l132,281l49,182l1,133l39,179l150,401l158,291l114,115l152,117l120,93l393,275l114,67l186,75l348,90l351,75l326,54l-51,339l108,130l87,31l155,20l301,62l127,-47l415,107l145,66l257,292l349,363l114,156l51,107l91,55l158,59l70,46l23,85l-61,128l-103,103l135,331l222,42l227,157l96,116l71,137l180,147l196,142l51,335l-10,190l21,115l-27,103l2,233l30,579l-114,131l-31,94l5,147l-32,66l-13,274l-27,553l100,225l47,63l60,156l28,237l-21,213l44,46l2,172l25,163l-18,418l-37,149l-4,203l-168,570l-35,199l17,253l-87,342l-37,240l-62,70l-17,204l-86,114l-136,106l-153,98l-378,192l-231,142l-132,66l-483,192l-117,32l-400,144l-265,147l-71,18l-208,-3l-107,-25l-365,-14l-305,37l-254,-46l-349,75l-67,-5l-271,-102l-151,-36l-270,-8l-232,42l-72,61l-139,44l-219,160l-83,76l-295,425l-40,72l-171,416l-74,101l-184,94l-66,64l-247,338l-63,148l-109,362l18,232l-56,92l-94,100l-47,83l-164,109l-83,107l-285,162l-109,43l-21,103M-505088,21852l-144,-31l-62,-88l-146,-112l-61,-104l159,-88l72,-89l129,-260l64,-81l123,-37l92,82l107,-25l65,19l108,114l94,-26l59,34l203,25l32,129l-45,154l-61,33l-22,79l-62,16l-25,69l-97,3l-82,58l-42,97l-208,21l-81,-20l-169,28M-504501,21092l-73,35l-110,-127l-154,14l-101,-86l-103,12l-54,-113l-28,-372l-47,-109l-41,-292l43,-60l112,-2l71,-47l72,-148l8,-150l115,-143l133,-272l109,-347l59,-89l117,-86l118,-40l218,47l173,59l194,119l136,126l217,241l143,213l-11,173l-35,104l-165,210l-76,4l-51,167l-113,87l19,74l-24,121l22,159l-113,128l-113,10l-6,89l-47,84l-61,35l-40,130l-66,63l-159,-9l-160,21l-128,-33Z"/>
+                                <linearGradient id="gradTopo" x1="0" y1="0" x2="1" y2="1">
+                                    <stop class="topo-a" offset="0"/><stop class="topo-b" offset=".55"/><stop class="topo-c" offset="1"/>
+                                </linearGradient>
+                                <filter id="mapa-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="500"/></filter>
+                            </defs>
+                            <!-- scale(1,-1): o IBGE usa Y para cima, o SVG usa Y para baixo. Dentro deste grupo, translate(0,-N) desloca PARA BAIXO na tela -->
+                            <g transform="scale(1,-1)">
+                                <use href="#amapa-shape" transform="translate(0,-1300)" fill="#000" opacity=".28" filter="url(#mapa-blur)"/>
+                                <use href="#amapa-shape" transform="translate(0,-700)" class="mapa-lado"/>
+                                <use href="#amapa-shape" transform="translate(0,-560)" class="mapa-lado"/>
+                                <use href="#amapa-shape" transform="translate(0,-420)" class="mapa-lado"/>
+                                <use href="#amapa-shape" transform="translate(0,-280)" class="mapa-lado"/>
+                                <use href="#amapa-shape" transform="translate(0,-140)" class="mapa-lado"/>
+                                <use href="#amapa-shape" fill="url(#gradTopo)" class="mapa-borda" stroke-width="1.25" stroke-linejoin="round"/>
+                                <!-- Linha do Equador (lat 0) -->
+                                <line x1="-548763" x2="-498758" y1="0" y2="0" vector-effect="non-scaling-stroke" stroke-dasharray="4 5" stroke-width="1" class="stroke-slate-400/60 dark:stroke-slate-500/60"/>
+                            </g>
+                        </svg>
+                        <!-- Linhas-guia e rótulos (pixels) e marcadores: gerados em montarMapaCampus() no script.js -->
+                        <svg id="mapa-linhas" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible"></svg>
+                        <div id="mapa-pins" class="absolute inset-0"></div>
+                    </div>
+
+                    <div class="absolute bottom-3 left-3 right-3 flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-lg border border-slate-200/60 dark:border-slate-800/60 z-20 shadow-sm">
+                        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Vetor IBGE</span>
+                        <span>Tamanho do círculo proporcional ao nº de projetos</span>
+                    </div>
                 </div>
             </div>
 
@@ -116,29 +172,29 @@
                </div>
 
                <!-- 1. Campus (Input com Botão Limpar invertido) -->
-               <div class="relative">
+               <div class="relative focus-within:z-30">
                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Filtrar por Campus</label>
                    <div class="relative flex items-center">
-                       <input list="lista-campus" id="filtro-campus" placeholder="Selecione ou digite..." 
+                       <input id="filtro-campus" placeholder="Selecione ou digite..." 
                               class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 pr-9 text-sm focus:ring-2 focus:ring-emerald-600 outline-none" 
                               autocomplete="off">
                        <button type="button" onclick="limparFiltroCampus()" class="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold hidden" id="btn-limpar-campus" title="Apagar campus">&times;</button>
                    </div>
                    <!-- Substituto do Datalist do Campus -->
-<div id="sugestoes-campus" class="absolute left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-20 divide-y divide-slate-100 dark:divide-slate-800"></div>
+<div id="sugestoes-campus" class="absolute left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-50 divide-y divide-slate-100 dark:divide-slate-800"></div>
                </div>
 
                <!-- 2. Situação (Input com Botão Limpar invertido) -->
-               <div class="relative">
+               <div class="relative focus-within:z-30">
                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Filtrar por Situação</label>
                    <div class="relative flex items-center">
-                       <input list="lista-situacoes" id="filtro-situacao" placeholder="Selecione ou digite..." 
+                       <input id="filtro-situacao" placeholder="Selecione ou digite..." 
                               class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 pr-9 text-sm focus:ring-2 focus:ring-emerald-600 outline-none" 
                               autocomplete="off">
                        <button type="button" onclick="limparFiltroSituacao()" class="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold hidden" id="btn-limpar-situacao" title="Apagar situação">&times;</button>
                    </div>
                    <!-- Substituto do Datalist da Situação -->
-<div id="sugestoes-situacao" class="absolute left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-20 divide-y divide-slate-100 dark:divide-slate-800"></div>
+<div id="sugestoes-situacao" class="absolute left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden z-50 divide-y divide-slate-100 dark:divide-slate-800"></div>
                </div>
 
               <!-- 3. Edital (Busca Inteligente com Sugestões Dinâmicas) -->

@@ -1,9 +1,12 @@
 const API_URL = "http://127.0.0.1:8000";
-let chartCampus = null, chartSituacao = null, chartAno = null;
 
 let temporizadorDebounceTitulo = null;
 let indiceSelecaoTitulo = -1;
 let temporizadorFiltros = null;
+
+let chartSituacao = null;
+let chartAno = null;
+let dadosIndicadoresGlobais = null;
 
 const inputAno = document.getElementById('filtro-ano');
 const btnLimparAno = document.getElementById('btn-limpar-ano');
@@ -37,14 +40,129 @@ const btnLimparBusca = document.getElementById('btn-limpar-busca');
 const containerSugestoesCampus = document.getElementById('sugestoes-campus');
 const containerSugestoesSituacao = document.getElementById('sugestoes-situacao');
 
+// Mapeamento dos Campuses para associação com o banco e os elementos HTML
+const MAPA_GEO = { lonMin: -54.8763, lonMax: -49.8758, latMax: 4.5088, latMin: -1.2362 }; // limites do SVG do IBGE
+// lat/lon aproximadas (ajuste se quiser precisão de rua). lado/dx/dy = posição do rótulo em relação ao ponto (px)
+const COORDENADAS_CAMPUS = [
+    { id: 'OPQ', palavras: ['oiapoque', 'opq'],            nome: 'Oiapoque',         filtro: 'Oiapoque (OPQ)',          lat:  3.8433, lon: -51.8331, lado: 'esq', dx: 34, dy: -8 },
+    { id: 'PBA', palavras: ['pedra', 'branca', 'pba'],     nome: 'Pedra Branca',     filtro: 'Pedra Branca do Amapari (PBA)', lat: 0.7772, lon: -51.9508, lado: 'esq', dx: 30, dy: -16 },
+    { id: 'PTG', palavras: ['porto', 'grande', 'ptg'],     nome: 'Porto Grande',     filtro: 'Porto Grande (PTG)',      lat:  0.7122, lon: -51.4122, lado: 'dir', dx: 30, dy: -40 },
+    { id: 'RE',  palavras: ['reitoria', 're'],                   nome: 'Reitoria',         filtro: 'Reitoria (RE)',           lat:  0.0330, lon: -51.0640, lado: 'dir', dx: 44, dy: -38 },
+    { id: 'MCP', palavras: ['macapa', 'mcp'],              nome: 'Macapá',           filtro: 'Macapá (MCP)',            lat:  0.0036, lon: -51.0899, lado: 'dir', dx: 44, dy: 0 },
+    { id: 'STN', palavras: ['santana', 'stn'],             nome: 'Santana',          filtro: 'Santana (STN)',           lat: -0.0583, lon: -51.1815, lado: 'dir', dx: 44, dy: 38 },
+    { id: 'LRJ', palavras: ['laranjal', 'jari', 'lrj'],    nome: 'Laranjal do Jari', filtro: 'Laranjal do Jari (LRJ)',  lat: -0.8044, lon: -52.4528, lado: 'esq', dx: 34, dy: -4 }
+];
+
+let contagemCampus = {};
+
+function filtrarPorCampus(c) {
+    if (!inputCampus) return;
+    inputCampus.value = c.filtro;
+    btnLimparCampus.classList.remove('hidden');
+    carregarProjetos();
+}
+
+// Cria os marcadores e rótulos uma única vez
+function montarMapaCampus() {
+    const pins = document.getElementById('mapa-pins');
+    const wrap = document.getElementById('mapa-wrap');
+    if (!pins || !wrap) return;
+    pins.innerHTML = '';
+    COORDENADAS_CAMPUS.forEach((c, i) => {
+        const dot = document.createElement('button');
+        dot.id = `dot-${c.id}`;
+        dot.title = c.nome;
+        dot.className = "absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/85 dark:bg-emerald-400/90 border-2 border-white dark:border-slate-900 shadow-md hover:scale-110 transition-transform";
+        dot.onclick = () => filtrarPorCampus(c);
+
+        // Halo pulsante
+    const halo = document.createElement('span');
+    halo.className = "pulso-campus absolute inset-0 rounded-full bg-emerald-400 pointer-events-none";
+    halo.style.animationDelay = `${i * 0.35}s`;
+    dot.appendChild(halo);
+
+        const chip = document.createElement('button');
+        chip.id = `pin-${c.id}`;
+        chip.className = "absolute z-[200] inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-semibold " +
+            "bg-white/95 dark:bg-slate-800/95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-md " +
+            "hover:ring-2 hover:ring-emerald-500 transition";
+        chip.innerHTML = `${c.nome}: <span id="qtd-${c.id}" class="text-emerald-600 dark:text-emerald-400 font-bold">0</span>`;
+        chip.onclick = () => filtrarPorCampus(c);
+
+        pins.appendChild(dot);
+        pins.appendChild(chip);
+    });
+    if ('ResizeObserver' in window) new ResizeObserver(posicionarMapa).observe(wrap);
+    posicionarMapa();
+}
+
+// Converte lat/lon -> pixels dentro do #mapa-wrap e redesenha as linhas-guia
+function posicionarMapa() {
+    const wrap = document.getElementById('mapa-wrap');
+    const svg = document.getElementById('mapa-linhas');
+    if (!wrap || !svg) return;
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    const g = MAPA_GEO;
+    const max = Math.max(1, ...Object.values(contagemCampus));
+    let linhas = '';
+
+    const yEq = g.latMax / (g.latMax - g.latMin) * H;
+    linhas += `<text x="6" y="${yEq - 5}" font-size="10" class="fill-slate-400 dark:fill-slate-500">Linha do Equador</text>`;
+
+    COORDENADAS_CAMPUS.forEach(c => {
+        const x = (c.lon - g.lonMin) / (g.lonMax - g.lonMin) * W;
+        const y = (g.latMax - c.lat) / (g.latMax - g.latMin) * H;
+        const r = 4.5 + 10 * Math.sqrt((contagemCampus[c.id] || 0) / max);
+        const cx = x + (c.lado === 'dir' ? c.dx : -c.dx), cy = y + c.dy;
+
+        const dot = document.getElementById(`dot-${c.id}`);
+        dot.style.cssText = `left:${x}px;top:${y}px;width:${2 * r}px;height:${2 * r}px;z-index:${100 - Math.round(r)}`;
+        const chip = document.getElementById(`pin-${c.id}`);
+        chip.style.left = `${cx}px`; chip.style.top = `${cy}px`;
+        chip.style.transform = `translate(${c.lado === 'dir' ? '0' : '-100%'}, -50%)`;
+
+        linhas += `<line x1="${x}" y1="${y}" x2="${cx}" y2="${cy}" stroke-width="1" class="stroke-slate-400 dark:stroke-slate-500"/>`;
+    });
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = linhas;
+}
+
+// Atualiza os números e o tamanho dos círculos com os dados da API
+function renderizarMapaCampus(distribuicaoPorCampus) {
+    if (!distribuicaoPorCampus) return;
+    contagemCampus = {};
+COORDENADAS_CAMPUS.forEach(c => contagemCampus[c.id] = 0);
+
+Object.entries(distribuicaoPorCampus).forEach(([nomeBanco, qtd]) => {
+    const nomeNorm = normalizarTexto(nomeBanco);
+    const campus = COORDENADAS_CAMPUS.find(c =>
+        c.palavras.some(p => p instanceof RegExp ? p.test(nomeNorm) : nomeNorm.includes(p))
+    );
+    if (campus) contagemCampus[campus.id] += qtd;
+    else console.warn('Campus sem correspondência no mapa:', nomeBanco);
+});
+
+COORDENADAS_CAMPUS.forEach(c => {
+    const el = document.getElementById(`qtd-${c.id}`);
+    if (el) el.innerText = contagemCampus[c.id];
+});
+posicionarMapa();
+}
+
+
+// Função auxiliar para remover acentos e converter para minúsculas
+function normalizarTexto(texto) {
+    if (!texto) return "";
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
 
 // Função para renderizar as sugestões de Campus
 function renderizarSugestoesCampus(filtro = '') {
     containerSugestoesCampus.innerHTML = '';
-    const termo = filtro.toLowerCase().trim();
+    const termo = normalizarTexto(filtro.trim());
     
-    // Filtra as opções baseadas no que foi digitado
-    const filtrados = OPCOES_CAMPUS.filter(c => c.toLowerCase().includes(termo));
+    // Filtra as opções ignorando acentos e maiúsculas
+    const filtrados = OPCOES_CAMPUS.filter(c => normalizarTexto(c).includes(termo));
 
     if (filtrados.length === 0) {
         containerSugestoesCampus.classList.add('hidden');
@@ -69,8 +187,15 @@ function renderizarSugestoesCampus(filtro = '') {
     containerSugestoesCampus.classList.remove('hidden');
 }
 
-// Eventos do campo de Campus
-inputCampus.addEventListener('focus', () => renderizarSugestoesCampus(inputCampus.value));
+// --- Eventos do campo de Campus ---
+inputCampus.addEventListener('focus', () => {
+    renderizarSugestoesCampus(inputCampus.value);
+});
+
+inputCampus.addEventListener('click', () => {
+    renderizarSugestoesCampus(inputCampus.value);
+});
+
 inputCampus.addEventListener('input', function() {
     if (this.value.trim().length > 0) {
         btnLimparCampus.classList.remove('hidden');
@@ -84,18 +209,33 @@ inputCampus.addEventListener('input', function() {
     temporizadorFiltros = setTimeout(() => carregarProjetos(), 300);
 });
 
+function limparFiltroCampus() {
+    inputCampus.value = '';
+    btnLimparCampus.classList.add('hidden');
+    containerSugestoesCampus.classList.add('hidden');
+    carregarProjetos();
+}
+
 // Listas fixas de opções institucionais
 const OPCOES_CAMPUS = [
     "Macapá (MCP)", "Laranjal do Jari (LRJ)", "Porto Grande (PTG)",
     "Santana (STN)", "Oiapoque (OPQ)", "Reitoria (RE)", "Pedra Branca do Amapari (PBA)"
 ];
 
+
+// Listas fixas de opções de situação
+const OPCOES_SITUACAO = [
+    "Concluído", "Em execução", "Em edição", "Enviado",
+    "Não Enviado", "Cancelado", "Inativado", "Não aceito", "Não selecionado"
+];
+
 // Função para renderizar as sugestões de Situação
 function renderizarSugestoesSituacao(filtro = '') {
     containerSugestoesSituacao.innerHTML = '';
-    const termo = filtro.toLowerCase().trim();
+    const termo = normalizarTexto(filtro.trim());
     
-    const filtrados = OPCOES_SITUACAO.filter(s => s.toLowerCase().includes(termo));
+    // Filtra as opções ignorando acentos e maiúsculas
+    const filtrados = OPCOES_SITUACAO.filter(s => normalizarTexto(s).includes(termo));
 
     if (filtrados.length === 0) {
         containerSugestoesSituacao.classList.add('hidden');
@@ -120,8 +260,15 @@ function renderizarSugestoesSituacao(filtro = '') {
     containerSugestoesSituacao.classList.remove('hidden');
 }
 
-// Eventos do campo de Situação
-inputSituacao.addEventListener('focus', () => renderizarSugestoesSituacao(inputSituacao.value));
+// --- Eventos do campo de Situação ---
+inputSituacao.addEventListener('focus', () => {
+    renderizarSugestoesSituacao(inputSituacao.value);
+});
+
+inputSituacao.addEventListener('click', () => {
+    renderizarSugestoesSituacao(inputSituacao.value);
+});
+
 inputSituacao.addEventListener('input', function() {
     if (this.value.trim().length > 0) {
         btnLimparSituacao.classList.remove('hidden');
@@ -135,10 +282,12 @@ inputSituacao.addEventListener('input', function() {
     temporizadorFiltros = setTimeout(() => carregarProjetos(), 300);
 });
 
-const OPCOES_SITUACAO = [
-    "Concluído", "Em execução", "Em edição", "Enviado",
-    "Não Enviado", "Cancelado", "Inativado", "Não aceito", "Não selecionado"
-];
+function limparFiltroSituacao() {
+    inputSituacao.value = '';
+    btnLimparSituacao.classList.add('hidden');
+    containerSugestoesSituacao.classList.add('hidden');
+    carregarProjetos();
+}
 
 // Monitorar input do Ano
 inputAno.addEventListener('input', function() {
@@ -601,12 +750,10 @@ document.addEventListener('click', function(e) {
 });
 
 function renderizarGraficos(data) {
-    if (chartCampus) chartCampus.destroy();
-    chartCampus = new Chart(document.getElementById('graficoCampus'), {
-        type: 'bar',
-        data: { labels: Object.keys(data.distribuicao_por_campus), datasets: [{ data: Object.values(data.distribuicao_por_campus), backgroundColor: '#047857', borderRadius: 6 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    dadosIndicadoresGlobais = data; // Salva em cache global
+    
+    // Renderiza o mapa interativo em vez do gráfico de barras antigo
+    renderizarMapaCampus(data.distribuicao_por_campus);
 
     if (chartSituacao) chartSituacao.destroy();
     chartSituacao = new Chart(document.getElementById('graficoSituacao'), {
@@ -736,5 +883,6 @@ async function abrirDetalhes(id) {
 function fecharModal() { document.getElementById('modal-detalhes').classList.add('hidden'); }
 
 // Inicialização
+montarMapaCampus();
 carregarIndicadores();
 carregarProjetos();

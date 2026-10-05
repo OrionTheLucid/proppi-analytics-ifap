@@ -1,14 +1,28 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, event
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine, get_db
+import unicodedata
 
 # 1. Inicializa a aplicação web com o FastAPI e cria as tabelas físicas no banco de dados
 models.Base.metadata.create_all(bind=engine)
+
+# Função Python para remover acentos e converter para minúsculas
+def normalizar_texto(texto: str) -> str:
+    if not texto:
+        return ""
+    nfkd = unicodedata.normalize('NFD', str(texto))
+    texto_sem_acento = "".join([c for c in nfkd if not unicodedata.combining(c)])
+    return texto_sem_acento.lower()
+
+# Registra a função customizada 'normalizar' no SQLite via SQLAlchemy
+@event.listens_for(engine, "connect")
+def adicionar_funcao_normalizar(dbapi_connection, connection_record):
+    dbapi_connection.create_function("normalizar", 1, normalizar_texto)
 
 app = FastAPI(
     title="API PROPPI - IFAP",
@@ -63,8 +77,9 @@ def listar_projetos(
     query = db.query(models.ProjetoModel)
 
     if titulo:
-        query = query.filter(models.ProjetoModel.titulo.ilike(f"%{titulo}%"))
-    
+     termo = f"%{normalizar_texto(titulo)}%"
+     query = query.filter(func.normalizar(models.ProjetoModel.titulo).like(termo))
+
     if campus:
         # Dicionário de equivalência para mapear buscas parciais para as siglas do IFAP
         MAPEAMENTO_CAMPUS = {
@@ -101,7 +116,8 @@ def listar_projetos(
         query = query.filter(models.ProjetoModel.situacao_atual.ilike(f"%{filtro_situacao}%"))
 
     if edital:
-        query = query.filter(models.ProjetoModel.edital.ilike(f"%{edital}%"))
+     termo = f"%{normalizar_texto(edital)}%"
+     query = query.filter(func.normalizar(models.ProjetoModel.edital).like(termo))
         
     if ano:
         # Tenta filtrar tanto por igualdade exata quanto por texto contido, se aplicável
@@ -112,8 +128,9 @@ def listar_projetos(
             query = query.filter(models.ProjetoModel.ano_edital.cast(str).ilike(f"%{ano}%"))
 
     if area:
-        query = query.filter(models.ProjetoModel.area_conhecimento.ilike(f"%{area}%"))
-        
+     termo = f"%{normalizar_texto(area)}%"
+     query = query.filter(func.normalizar(models.ProjetoModel.area_conhecimento).like(termo))
+     
     if grupo_pesquisa:
         termo_gp = grupo_pesquisa.lower()
         if "sem grupo" in termo_gp or "definido" in termo_gp or termo_gp == "-":
@@ -122,7 +139,8 @@ def listar_projetos(
             query = query.filter(models.ProjetoModel.grupo_pesquisa.ilike(f"%{grupo_pesquisa}%"))
 
     if coordenador:
-        query = query.filter(models.ProjetoModel.coordenador.ilike(f"%{coordenador}%"))
+     termo = f"%{normalizar_texto(coordenador)}%"
+     query = query.filter(func.normalizar(models.ProjetoModel.coordenador).like(termo))
 
     # Aplica o limite para garantir resposta rápida na interface
     projetos_salvos = query.limit(limite).all()
