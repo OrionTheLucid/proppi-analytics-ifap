@@ -7,9 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine, get_db
 import unicodedata
-
-# 1. Inicializa a aplicação web com o FastAPI e cria as tabelas físicas no banco de dados
-models.Base.metadata.create_all(bind=engine)
+from fastapi.responses import JSONResponse
 
 # Função Python para remover acentos e converter para minúsculas
 def normalizar_texto(texto: str) -> str:
@@ -24,6 +22,9 @@ def normalizar_texto(texto: str) -> str:
 def adicionar_funcao_normalizar(dbapi_connection, connection_record):
     dbapi_connection.create_function("normalizar", 1, normalizar_texto)
 
+# 1. Inicializa a aplicação web com o FastAPI e cria as tabelas físicas no banco de dados
+models.Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="API PROPPI - IFAP",
     description="Sistema de Gestão e Business Intelligence da Pró-Reitoria de Pesquisa, Pós-graduação e Inovação",
@@ -36,6 +37,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def erro_generico(request, exc):
+    print(f"Erro em {request.url}: {exc!r}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 # # 2. Definição do Esquema (Pydantic) para validação dos dados de entrada
 # class ProjetoCreate(BaseModel):
