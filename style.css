@@ -14,3 +14,21 @@
 .dark *::-webkit-scrollbar-thumb:hover {
     background: #475569; /* Cor do puxador ao passar o mouse (slate-600) */
 }
+
+/* Animação que varia apenas a intensidade da luz */
+@keyframes brilhoPulsante {
+    0% {
+        filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.2));
+    }
+    50% {
+        filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.65));
+    }
+    100% {
+        filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.2));
+    }
+}
+
+/* Aplicação da animação no canvas */
+#graficoSituacao, #grafico-situacao {
+    animation: brilhoPulsante 3s infinite ease-in-out;
+}

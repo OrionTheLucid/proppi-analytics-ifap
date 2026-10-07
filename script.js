@@ -42,15 +42,15 @@ const containerSugestoesSituacao = document.getElementById('sugestoes-situacao')
 
 // Mapeamento dos Campuses para associação com o banco e os elementos HTML
 const MAPA_GEO = { lonMin: -54.8763, lonMax: -49.8758, latMax: 4.5088, latMin: -1.2362 }; // limites do SVG do IBGE
-// lat/lon aproximadas (ajuste se quiser precisão de rua). lado/dx/dy = posição do rótulo em relação ao ponto (px)
+// Mapeamento dos Campuses com cores individuais para cada unidade
 const COORDENADAS_CAMPUS = [
-    { id: 'OPQ', palavras: ['oiapoque', 'opq'],            nome: 'Oiapoque',         filtro: 'Oiapoque (OPQ)',          lat:  3.8433, lon: -51.8331, lado: 'esq', dx: 34, dy: -8 },
-    { id: 'PBA', palavras: ['pedra', 'branca', 'pba'],     nome: 'Pedra Branca',     filtro: 'Pedra Branca do Amapari (PBA)', lat: 0.7772, lon: -51.9508, lado: 'esq', dx: 30, dy: -16 },
-    { id: 'PTG', palavras: ['porto', 'grande', 'ptg'],     nome: 'Porto Grande',     filtro: 'Porto Grande (PTG)',      lat:  0.7122, lon: -51.4122, lado: 'dir', dx: 30, dy: -40 },
-    { id: 'RE',  palavras: ['reitoria', 're'],                   nome: 'Reitoria',         filtro: 'Reitoria (RE)',           lat:  0.0330, lon: -51.0640, lado: 'dir', dx: 44, dy: -38 },
-    { id: 'MCP', palavras: ['macapa', 'mcp'],              nome: 'Macapá',           filtro: 'Macapá (MCP)',            lat:  0.0036, lon: -51.0899, lado: 'dir', dx: 44, dy: 0 },
-    { id: 'STN', palavras: ['santana', 'stn'],             nome: 'Santana',          filtro: 'Santana (STN)',           lat: -0.0583, lon: -51.1815, lado: 'dir', dx: 44, dy: 38 },
-    { id: 'LRJ', palavras: ['laranjal', 'jari', 'lrj'],    nome: 'Laranjal do Jari', filtro: 'Laranjal do Jari (LRJ)',  lat: -0.8044, lon: -52.4528, lado: 'esq', dx: 34, dy: -4 }
+    { id: 'OPQ', palavras: ['oiapoque', 'opq'],            nome: 'Oiapoque',         filtro: 'Oiapoque (OPQ)',          lat:  3.8433, lon: -51.8331, lado: 'esq', dx: 34, dy: -8,  cor: '#06b6d4' }, // Ciano
+    { id: 'PBA', palavras: ['pedra', 'branca', 'pba'],     nome: 'Pedra Branca',     filtro: 'Pedra Branca do Amapari (PBA)', lat: 0.7772, lon: -51.9508, lado: 'esq', dx: 30, dy: -16, cor: '#f59e0b' }, // Amarelo / Âmbar
+    { id: 'PTG', palavras: ['porto', 'grande', 'ptg'],     nome: 'Porto Grande',     filtro: 'Porto Grande (PTG)',      lat:  0.7122, lon: -51.4122, lado: 'dir', dx: 30, dy: -40, cor: '#a855f7' }, // Púrpura / Roxo
+    { id: 'RE',  palavras: ['reitoria', 're'],             nome: 'Reitoria',         filtro: 'Reitoria (RE)',           lat:  0.0330, lon: -51.0640, lado: 'dir', dx: 44, dy: -38, cor: '#f43f5e' }, // Rosa / Vermelho
+    { id: 'MCP', palavras: ['macapa', 'mcp'],              nome: 'Macapá',           filtro: 'Macapá (MCP)',            lat:  0.0036, lon: -51.0899, lado: 'dir', dx: 44, dy: 0,   cor: '#10b981' }, // Verde Esmeralda
+    { id: 'STN', palavras: ['santana', 'stn'],             nome: 'Santana',          filtro: 'Santana (STN)',           lat: -0.0583, lon: -51.1815, lado: 'dir', dx: 44, dy: 38,  cor: '#3b82f6' }, // Azul
+    { id: 'LRJ', palavras: ['laranjal', 'jari', 'lrj'],    nome: 'Laranjal do Jari', filtro: 'Laranjal do Jari (LRJ)',  lat: -0.8044, lon: -52.4528, lado: 'esq', dx: 34, dy: -4,  cor: '#f97316' }  // Laranja
 ];
 
 let contagemCampus = {};
@@ -62,7 +62,7 @@ function filtrarPorCampus(c) {
     carregarProjetos();
 }
 
-// Cria os marcadores e rótulos uma única vez
+// Cria os marcadores e rótulos coloridos uma única vez
 function montarMapaCampus() {
     const pins = document.getElementById('mapa-pins');
     const wrap = document.getElementById('mapa-wrap');
@@ -72,21 +72,23 @@ function montarMapaCampus() {
         const dot = document.createElement('button');
         dot.id = `dot-${c.id}`;
         dot.title = c.nome;
-        dot.className = "absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/85 dark:bg-emerald-400/90 border-2 border-white dark:border-slate-900 shadow-md hover:scale-110 transition-transform";
+        dot.className = "absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white dark:border-slate-900 shadow-md hover:scale-110 transition-transform";
+        dot.style.backgroundColor = c.cor;
         dot.onclick = () => filtrarPorCampus(c);
 
-        // Halo pulsante
-    const halo = document.createElement('span');
-    halo.className = "pulso-campus absolute inset-0 rounded-full bg-emerald-400 pointer-events-none";
-    halo.style.animationDelay = `${i * 0.35}s`;
-    dot.appendChild(halo);
+        // Halo pulsante acompanhando a cor do campus
+        const halo = document.createElement('span');
+        halo.className = "pulso-campus absolute inset-0 rounded-full opacity-75 pointer-events-none";
+        halo.style.backgroundColor = c.cor;
+        halo.style.animationDelay = `${i * 0.35}s`;
+        dot.appendChild(halo);
 
         const chip = document.createElement('button');
         chip.id = `pin-${c.id}`;
         chip.className = "absolute z-[200] inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-semibold " +
             "bg-white/95 dark:bg-slate-800/95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-md " +
             "hover:ring-2 hover:ring-emerald-500 transition";
-        chip.innerHTML = `${c.nome}: <span id="qtd-${c.id}" class="text-emerald-600 dark:text-emerald-400 font-bold">0</span>`;
+        chip.innerHTML = `${c.nome}: <span id="qtd-${c.id}" class="font-bold" style="color: ${c.cor};">0</span>`;
         chip.onclick = () => filtrarPorCampus(c);
 
         pins.appendChild(dot);
@@ -539,6 +541,11 @@ function alternarDarkMode() {
         html.classList.add('dark');
         localStorage.setItem('tema', 'dark');
     }
+
+    // Re-renderiza os gráficos com as novas cores de contraste do tema atual
+    if (dadosIndicadoresGlobais) {
+        renderizarGraficos(dadosIndicadoresGlobais);
+    }
 }
 
 if (localStorage.getItem('tema') === 'dark') {
@@ -573,13 +580,6 @@ if (inputBusca) {
             containerSugestoes.innerHTML = '';
             // Se o usuário apagou todo o texto (via Backspace/Delete), recarrega a tabela automaticamente
             carregarProjetos();
-            return;
-        }
-
-        // 2. Exige apenas 1 letra, mostrando a caixa de sugestões
-        if (termo.length < 1) {
-            containerSugestoes.classList.add('hidden');
-            containerSugestoes.innerHTML = '';
             return;
         }
 
@@ -752,22 +752,197 @@ document.addEventListener('click', function(e) {
 function renderizarGraficos(data) {
     dadosIndicadoresGlobais = data; // Salva em cache global
     
-    // Renderiza o mapa interativo em vez do gráfico de barras antigo
+    // Renderiza o mapa interativo
     renderizarMapaCampus(data.distribuicao_por_campus);
 
-    if (chartSituacao) chartSituacao.destroy();
-    chartSituacao = new Chart(document.getElementById('graficoSituacao'), {
-        type: 'doughnut',
-        data: { labels: Object.keys(data.distribuicao_por_situacao), datasets: [{ data: Object.values(data.distribuicao_por_situacao), backgroundColor: ['#047857', '#10b981', '#34d399', '#6ee7b7', '#065f46', '#022c22', '#38bdf8', '#fbbf24', '#f87171'] }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
-    });
+    // Detecta se o Dark Mode está ativo para ajustar contraste de textos e bordas
+    const isDark = document.documentElement.classList.contains('dark');
+    const corTexto = isDark ? '#e2e8f0' : '#334155';
+    const corBordaDoughnut = isDark ? '#0f172a' : '#ffffff';
 
-    if (chartAno) chartAno.destroy();
-    chartAno = new Chart(document.getElementById('graficoAno'), {
-        type: 'line',
-        data: { labels: Object.keys(data.distribuicao_por_ano), datasets: [{ data: Object.values(data.distribuicao_por_ano), borderColor: '#047857', backgroundColor: 'rgba(4, 120, 87, 0.1)', fill: true, tension: 0.3 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    // 1. Gráfico de Situação Atual
+if (chartSituacao) chartSituacao.destroy();
+
+const situacoesLabels = Object.keys(data.distribuicao_por_situacao || {});
+const situacoesValores = Object.values(data.distribuicao_por_situacao || {});
+const totalProjetos = situacoesValores.reduce((acc, curr) => acc + curr, 0);
+
+// Paleta de gradientes
+const mapaGradientes = {
+    'Em execução': ['#2563eb', '#60a5fa'],
+    'Concluído': ['#059669', '#34d399'],
+    'Em edição': ['#d97706', '#fbbf24'],
+    'Enviado': ['#4f46e5', '#818cf8'],
+    'Não Enviado': ['#7c3aed', '#a78bfa'],
+    'Não aceito': ['#ea580c', '#fb923c'],
+    'Não selecionado': ['#e11d48', '#fb7185'],
+    'Cancelado': ['#475569', '#94a3b8'],
+    'Inativado': ['#334155', '#64748b']
+};
+
+const elSituacao = document.getElementById('graficoSituacao') || document.getElementById('grafico-situacao');
+
+if (elSituacao) {
+    chartSituacao = new Chart(elSituacao, {
+        type: 'doughnut',
+        // Plugins ativos: DataLabels (números nas fatias) e Plugin Customizado (texto e gradiente no centro)
+        plugins: [ChartDataLabels, {
+            id: 'fundoETextoCentral',
+            beforeDraw(chart) {
+                const { width, height, ctx } = chart;
+                ctx.save();
+                
+                const centerX = width / 2;
+                const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                const innerRadius = chart._metasets[0]?.data[0]?.innerRadius || 0;
+
+                // 1. Gradiente Radial Interno (Brilho suave dentro da rosca)
+                if (innerRadius > 0) {
+                    const gradienteCentro = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
+                    gradienteCentro.addColorStop(0, isDark ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.08)');
+                    gradienteCentro.addColorStop(1, 'transparent');
+
+                    ctx.fillStyle = gradienteCentro;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                // 2. Totalizador central
+                ctx.font = "bold 22px 'Inter', sans-serif";
+                ctx.fillStyle = corTexto;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(totalProjetos, centerX, centerY - 8);
+
+                ctx.font = "500 11px 'Inter', sans-serif";
+                ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+                ctx.fillText('Projetos', centerX, centerY + 12);
+
+                ctx.restore();
+            }
+        }],
+        data: { 
+            labels: situacoesLabels, 
+            datasets: [{ 
+                data: situacoesValores, 
+                // Gradiente Radial Aplicado a Cada Fatia
+                backgroundColor: function(context) {
+                    const chart = context.chart;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return null;
+
+                    const index = context.dataIndex;
+                    const label = situacoesLabels[index];
+                    const cores = mapaGradientes[label] || ['#0891b2', '#06b6d4'];
+
+                    const centerX = (chartArea.left + chartArea.right) / 2;
+                    const centerY = (chartArea.top + chartArea.bottom) / 2;
+                    const outerRadius = (chartArea.right - chartArea.left) / 2;
+
+                    const gradient = ctx.createRadialGradient(
+                        centerX, centerY, outerRadius * 0.3,
+                        centerX, centerY, outerRadius
+                    );
+                    gradient.addColorStop(0, cores[1]);
+                    gradient.addColorStop(1, cores[0]);
+                    return gradient;
+                },
+                borderColor: corBordaDoughnut,
+                borderWidth: 2,
+                hoverOffset: 8
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            // 1. Redução sutil do tamanho do gráfico via padding
+            layout: { 
+                padding: { top: 22, bottom: 15, left: 22, right: 22 } 
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true,
+                duration: 1400,
+                easing: 'easeOutQuart'
+            },
+            plugins: { 
+                // 2. Exibição da Quantidade Dentro do Gráfico
+                datalabels: {
+                    color: '#ffffff',
+                    font: {
+                        weight: 'bold',
+                        size: 11,
+                        family: "'Inter', sans-serif"
+                    },
+                    // Formatação para ocultar o número caso a fatia seja 0
+                    formatter: (value) => (value > 0 ? value : ''),
+                    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+                    textShadowBlur: 4
+                },
+                legend: { 
+                    position: 'bottom', 
+                    labels: { 
+                        color: corTexto,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 28,
+                        font: { size: 11, family: "'Inter', sans-serif", weight: '500' },
+                        boxWidth: 8,
+                        boxHeight: 8
+                    } 
+                },
+                tooltip: {
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    titleColor: isDark ? '#f8fafc' : '#0f172a',
+                    bodyColor: isDark ? '#cbd5e1' : '#334155',
+                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                    borderWidth: 1,
+                    padding: 10,
+                    usePointStyle: true
+                }
+            },
+            // 1. Espessura da rosca ajustada (72%) para dar mais leveza visual
+            cutout: '72%'
+        }
     });
+}
+
+    // 2. Gráfico de Evolução por Ano
+    if (chartAno) chartAno.destroy();
+    const elAno = document.getElementById('graficoAno');
+    if (elAno) {
+        chartAno = new Chart(elAno, {
+            type: 'line',
+            data: { 
+                labels: Object.keys(data.distribuicao_por_ano || {}), 
+                datasets: [{ 
+                    data: Object.values(data.distribuicao_por_ano || {}), 
+                    borderColor: '#10b981', 
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                    fill: true, 
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        ticks: { color: corTexto },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: { color: corTexto },
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }
+                    }
+                }
+            }
+        });
+    }
 }
 
 function renderizarListaAreas(areas) {
@@ -810,15 +985,18 @@ function renderizarListaGrupos(grupos) {
 }
 
 async function carregarProjetos() {
+    const tabela = document.getElementById('tabela-projetos');
+    if (!tabela) return;
+
     try {
-        const termoTitulo = document.getElementById('input-busca-titulo').value;
-        const campus = document.getElementById('filtro-campus').value;
-        const situacao = document.getElementById('filtro-situacao').value;
-        const edital = document.getElementById('filtro-edital').value;
-        const ano = document.getElementById('filtro-ano').value;
-        const area = document.getElementById('filtro-area').value;
-        const grupo = document.getElementById('filtro-grupo').value;
-        const coordenador = document.getElementById('filtro-coordenador').value;
+        const termoTitulo = document.getElementById('input-busca-titulo')?.value || '';
+        const campus = document.getElementById('filtro-campus')?.value || '';
+        const situacao = document.getElementById('filtro-situacao')?.value || '';
+        const edital = document.getElementById('filtro-edital')?.value || '';
+        const ano = document.getElementById('filtro-ano')?.value || '';
+        const area = document.getElementById('filtro-area')?.value || '';
+        const grupo = document.getElementById('filtro-grupo')?.value || '';
+        const coordenador = document.getElementById('filtro-coordenador')?.value || '';
         
         let url = `${API_URL}/api/projetos?limite=50`;
         if (termoTitulo) url += `&titulo=${encodeURIComponent(termoTitulo)}`;
@@ -830,8 +1008,7 @@ async function carregarProjetos() {
         if (grupo) url += `&grupo_pesquisa=${encodeURIComponent(grupo)}`;
         if (coordenador) url += `&coordenador=${encodeURIComponent(coordenador)}`;
 
-        // Deixa a tabela semitransparente enquanto busca:
-        const tabela = document.getElementById('tabela-projetos');
+        // Aplica efeito visual de carregamento
         tabela.classList.add('opacity-40', 'pointer-events-none', 'transition-opacity');
 
         const res = await fetch(url);
@@ -840,27 +1017,35 @@ async function carregarProjetos() {
 
         if (!data.resultados || data.resultados.length === 0) {
             tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Nenhum projeto encontrado.</td></tr>`;
-            document.getElementById('contador-exibicao').innerText = "0 registros";
+            const contador = document.getElementById('contador-exibicao');
+            if (contador) contador.innerText = "0 registros";
             return;
         }
 
-        document.getElementById('contador-exibicao').innerText = `Mostrando ${data.resultados.length} registros`;
+        const contador = document.getElementById('contador-exibicao');
+        if (contador) contador.innerText = `Mostrando ${data.resultados.length} registros`;
+
         data.resultados.forEach(p => {
             const linha = document.createElement('tr');
             linha.className = "hover:bg-emerald-50/50 dark:hover:bg-slate-800/50 transition cursor-pointer";
             linha.onclick = () => abrirDetalhes(p.id);
+            
+            const editalTexto = p.edital ? `${p.edital} (${p.ano_edital || '-'})` : '-';
+
             linha.innerHTML = `
-                <td class="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">${p.titulo}</td>
-                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${p.campus}</td>
-                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${p.edital} (${p.ano_edital})</td>
-                <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 whitespace-nowrap">${p.situacao_atual}</span></td>
+                <td class="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">${p.titulo || '-'}</td>
+                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${p.campus || '-'}</td>
+                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${editalTexto}</td>
+                <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 whitespace-nowrap">${p.situacao_atual || '-'}</span></td>
             `;
             tabela.appendChild(linha);
-            // Remove o efeito de transparência quando os dados terminarem de carregar
-            tabela.classList.remove('opacity-40', 'pointer-events-none');
         });
     } catch (error) {
         console.error("Erro ao carregar projetos:", error);
+        tabela.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-red-500">Erro ao carregar os dados.</td></tr>`;
+    } finally {
+        // Garante que o estado de opacidade seja removido independentemente do resultado
+        tabela.classList.remove('opacity-40', 'pointer-events-none');
     }
 }
 
