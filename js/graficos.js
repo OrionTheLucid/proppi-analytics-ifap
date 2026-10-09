@@ -2,12 +2,14 @@
 let chartSituacao = null;
 let chartAno = null;
 let dadosIndicadoresGlobais = null;
+let totalGeralProjetos = null; // total SEM filtro de campus (referência para os KPIs)
 
 async function carregarIndicadores() {
     try {
         const data = await buscarIndicadores();
-        document.getElementById('total-projetos').innerText = data.metrica_geral.total_projetos;
+        totalGeralProjetos = data.metrica_geral.total_projetos;
         renderizarGraficos(data);
+        atualizarKPIs(data); // depois do mapa, que calcula contagemCampus
         renderizarListaAreas(data.distribuicao_por_area);
         renderizarListaGrupos(data.distribuicao_por_grupo);
     } catch (error) {
@@ -254,6 +256,7 @@ function renderizarListaGrupos(grupos) {
 // Função chamada pelo main.js para atualizar APENAS os dados dos gráficos (Gera animação fluida)
 function atualizarGraficosBI(data) {
     dadosIndicadoresGlobais = data;
+    atualizarKPIs(data);
     
     if (chartSituacao) {
         chartSituacao.data.labels = Object.keys(data.distribuicao_por_situacao || {});
@@ -269,4 +272,75 @@ function atualizarGraficosBI(data) {
 
     renderizarListaAreas(data.distribuicao_por_area);
     renderizarListaGrupos(data.distribuicao_por_grupo);
+}
+
+// Mostra o campus ativo ao lado dos títulos dos cards marcados com data-bi-titulo
+function atualizarTitulosBI(nome, cor) {
+    document.querySelectorAll('[data-bi-titulo]').forEach(el => {
+        let sufixo = el.querySelector('.bi-sufixo');
+        if (!sufixo) {
+            sufixo = document.createElement('span');
+            sufixo.className = 'bi-sufixo font-medium';
+            el.appendChild(sufixo);
+        }
+        sufixo.textContent = nome ? ` · ${nome}` : '';
+        sufixo.style.color = cor || '';
+    });
+}
+
+// ===== KPIs do topo =====
+
+// Anima um número do valor atual até o destino (respeita "reduzir movimento")
+function animarNumero(el, destino, decimais = 0, sufixo = '') {
+    if (!el) return;
+    const de = parseFloat(el.dataset.valor || '0') || 0;
+    el.dataset.valor = destino;
+    const fmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: decimais, maximumFractionDigits: decimais }) + sufixo;
+    const reduzir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (el._anim) cancelAnimationFrame(el._anim);
+    if (reduzir || !window.requestAnimationFrame || de === destino) { el.textContent = fmt(destino); return; }
+    const t0 = performance.now(), duracao = 700;
+    const passo = agora => {
+        const p = Math.min(1, (agora - t0) / duracao);
+        const suave = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        el.textContent = fmt(de + (destino - de) * suave);
+        if (p < 1) el._anim = requestAnimationFrame(passo);
+    };
+    el._anim = requestAnimationFrame(passo);
+}
+
+// Calcula e preenche os 4 KPIs. Acompanha o campus ativo no mapa (data já vem filtrada pela API).
+function atualizarKPIs(data) {
+    const total = (data.metrica_geral && data.metrica_geral.total_projetos) || 0;
+    const ativo = COORDENADAS_CAMPUS.find(c => c.id === campusAtivoBI) || null;
+    const situacoes = Object.entries(data.distribuicao_por_situacao || {});
+    const somar = nome => situacoes.filter(([k]) => normalizarTexto(k) === nome).reduce((a, [, v]) => a + v, 0);
+    const execucao = somar('em execucao'), concluidos = somar('concluido');
+    const pct = v => (total ? (v / total) * 100 : 0);
+    const f1 = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const texto = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+
+    // 1. Total
+    animarNumero(document.getElementById('total-projetos'), total);
+    texto('kpi-total-sub', ativo && totalGeralProjetos ? `${ativo.nome} · de ${totalGeralProjetos.toLocaleString('pt-BR')} no total` : 'em todos os campi');
+
+    // 2. Campi com projetos (sempre global: o mapa não é filtrado)
+    const comProjetos = Object.values(contagemCampus).filter(q => q > 0).length;
+    animarNumero(document.getElementById('kpi-campi'), comProjetos);
+    if (ativo && totalGeralProjetos) {
+        const parte = ((contagemCampus[ativo.id] || 0) / totalGeralProjetos) * 100;
+        texto('kpi-campi-sub', `${ativo.nome} concentra ${f1(parte)}% dos projetos`);
+    } else {
+        texto('kpi-campi-sub', `de ${COORDENADAS_CAMPUS.length} unidades do IFAP`);
+    }
+
+    // 3. Em execução
+    animarNumero(document.getElementById('kpi-execucao'), execucao);
+    texto('kpi-execucao-sub', `${f1(pct(execucao))}% dos projetos${ativo ? ' de ' + ativo.nome : ''}`);
+
+    // 4. Taxa de conclusão (com barra de progresso)
+    animarNumero(document.getElementById('kpi-conclusao'), pct(concluidos), 1, '%');
+    texto('kpi-conclusao-sub', `${concluidos.toLocaleString('pt-BR')} projetos concluídos`);
+    const barra = document.getElementById('kpi-conclusao-barra');
+    if (barra) barra.style.width = `${Math.min(100, pct(concluidos))}%`;
 }

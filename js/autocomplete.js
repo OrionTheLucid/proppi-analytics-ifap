@@ -9,6 +9,7 @@
 //   transformar(valores, termo) .... ajuste final da lista de sugestões
 //   recarregarAoDigitar ............ atraso (ms) para recarregar a tabela enquanto digita
 //   recarregarSeVazio .............. recarrega a tabela imediatamente ao apagar o texto
+//   aoAlterar(valor) ............... chamado ao escolher (valor) ou limpar (null) o campo
 //   nomeLimpar ..................... nome da função global usada nos onclick do HTML
 
 const AUTOCOMPLETES = {};
@@ -61,6 +62,7 @@ function criarAutocomplete(cfg) {
         atualizarBotao();
         fechar();
         carregarProjetos();
+        if (cfg.aoAlterar) cfg.aoAlterar(valor);
     }
 
     // Limpa o campo sem recarregar a tabela (usado por "Limpar todos os filtros")
@@ -72,6 +74,7 @@ function criarAutocomplete(cfg) {
         atualizarBotao();
         if (lista) lista.innerHTML = '';
         fechar();
+        if (cfg.aoAlterar) cfg.aoAlterar(null);
     }
 
     function limpar() {

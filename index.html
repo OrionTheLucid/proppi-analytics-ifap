@@ -19,7 +19,7 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans transition-colors">
 
-    <header class="bg-emerald-800 dark:bg-slate-900 text-white shadow-md py-6 px-8 flex justify-between items-center transition-colors">
+    <header class="sticky top-0 z-40 bg-emerald-800/90 dark:bg-slate-900/80 backdrop-blur-md text-white shadow-lg shadow-emerald-950/10 dark:shadow-black/30 border-b border-emerald-600/30 dark:border-slate-800 py-4 px-8 flex justify-between items-center transition-colors">
         <div>
             <h1 class="text-2xl font-bold">Sistema de Gestão de Projetos - PROPPI</h1>
             <p class="text-emerald-200 dark:text-slate-400 text-sm">Instituto Federal de Educação, Ciência e Tecnologia do Amapá (Painel Analítico)</p>
@@ -31,31 +31,71 @@
 
     <main class="w-[96%] max-w-[1800px] mx-auto p-4 md:p-6 space-y-6">
 
-        <!-- Bloco de Indicador Geral (KPI) -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm md:col-span-1">
-                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Geral de Projetos</p>
-                <p id="total-projetos" class="text-3xl font-bold text-emerald-700 dark:text-emerald-500 mt-2">Carregando...</p>
-            </div>
-            <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 p-6 rounded-xl shadow-sm md:col-span-3 flex items-center justify-between">
-                <div>
-                    <h3 class="font-semibold text-emerald-900 dark:text-emerald-300 text-base">Modo de Consulta Institucional Ativo</h3>
-                    <p class="text-emerald-700 dark:text-emerald-400 text-sm mt-1">Utilize os filtros combinados ou clique nas linhas da tabela para detalhar os registros.</p>
+        <!-- Bloco de Indicadores (KPIs). Preenchidos por atualizarKPIs() em graficos.js -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 p-5 flex items-start gap-4">
+                <div class="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Total de Projetos</p>
+                    <p id="total-projetos" class="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-1 tabular-nums">—</p>
+                    <p id="kpi-total-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Carregando...</p>
                 </div>
             </div>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 p-5 flex items-start gap-4">
+                <div class="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Campi com Projetos</p>
+                    <p id="kpi-campi" class="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-1 tabular-nums">—</p>
+                    <p id="kpi-campi-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Carregando...</p>
+                </div>
+            </div>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 p-5 flex items-start gap-4">
+                <div class="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Em Execução</p>
+                    <p id="kpi-execucao" class="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-1 tabular-nums">—</p>
+                    <p id="kpi-execucao-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Carregando...</p>
+                </div>
+            </div>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 p-5 flex items-start gap-4">
+                <div class="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Taxa de Conclusão</p>
+                    <p id="kpi-conclusao" class="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-1 tabular-nums">—</p>
+                    <p id="kpi-conclusao-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Carregando...</p>
+                    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                        <div id="kpi-conclusao-barra" class="h-full rounded-full bg-emerald-500 transition-all duration-700" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Faixa de orientação -->
+        <div class="flex items-center gap-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-950/30 backdrop-blur-md px-5 py-3 text-sm">
+            <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500"></span>
+            <p class="text-emerald-800 dark:text-emerald-300"><strong class="font-semibold">Modo de Consulta Institucional Ativo.</strong>
+                <span class="text-emerald-700/90 dark:text-emerald-400/90">Utilize os filtros combinados, clique em um campus no mapa ou nas linhas da tabela para detalhar os registros.</span></p>
         </div>
 
         <!-- Seção de Gráficos e Indicadores -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
 <!-- Projetos por Campus (Mapa IBGE) -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm transition-all flex flex-col h-full">
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 p-6 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 transition-all flex flex-col h-full">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Projetos por Campus</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400">Distribuição territorial e cobertura institucional</p>
                     </div>
-                    <span class="text-xs font-medium px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50">Amapá</span>
+                    <span class="text-xs font-medium px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50">Mapa Interativo</span>
                 </div>
 
                 <style>
@@ -74,6 +114,12 @@
                 </style>
 
                 <div id="mapa-container" class="relative w-full h-[550px] flex items-center justify-center rounded-xl border border-slate-200/60 dark:border-slate-800/80 overflow-hidden select-none bg-gradient-to-b from-sky-50 to-slate-50 dark:from-slate-950 dark:to-slate-900">
+                    <!-- Badge do filtro de campus ativo (controlada por mapa.js) -->
+                    <div id="badge-campus-mapa" class="hidden absolute top-3 left-3 z-30 flex items-center gap-2 rounded-full border bg-white/90 dark:bg-slate-900/90 backdrop-blur-md pl-3 pr-1.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-md">
+                        <span data-bolinha class="w-2 h-2 rounded-full"></span>
+                        <span>Exibindo: <strong id="badge-campus-nome" class="font-semibold"></strong></span>
+                        <button type="button" onclick="limparFiltroCampus()" aria-label="Remover filtro de campus" class="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-100 transition">✕</button>
+                    </div>
                     <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
                     <!-- Caixa com a proporção exata do viewBox do IBGE (50005 x 57450) -->
@@ -107,14 +153,14 @@
 
                     <div class="absolute bottom-3 left-3 right-3 flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-lg border border-slate-200/60 dark:border-slate-800/60 z-20 shadow-sm">
                         <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Vetor IBGE</span>
-                        <span>Tamanho do círculo proporcional ao nº de projetos</span>
+                        <span>Selecione um Campus no mapa para filtrar</span>
                     </div>
                 </div>
             </div>
 
             <!-- 2. Projetos por Situação -->
-            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col h-full min-h-[420px]">
-    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-2">Projetos por Situação Atual</h3>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-6 shadow-lg shadow-slate-900/5 dark:shadow-black/20 border border-slate-200/70 dark:border-slate-700/50 flex flex-col h-full min-h-[420px]">
+    <h3 data-bi-titulo class="text-base font-bold text-slate-800 dark:text-slate-100 mb-2">Projetos por Situação Atual</h3>
     
     <!-- Wrapper responsivo que preenche o espaço restante do card -->
     <div class="relative flex-1 w-full min-h-[300px] flex items-center justify-center pt-2">
@@ -123,16 +169,16 @@
 </div>
 
             <!-- 3. Evolução por Ano -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
-                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Evolução de Projetos por Ano</h2>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 p-6 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20">
+                <h2 data-bi-titulo class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Evolução de Projetos por Ano</h2>
                 <div class="relative h-64 flex items-center justify-center">
                     <canvas id="graficoAno"></canvas>
                 </div>
             </div>
 
             <!-- 4. Principais Grupos de Pesquisa -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
-                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Principais Grupos de Pesquisa</h2>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 p-6 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20">
+                <h2 data-bi-titulo class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Principais Grupos de Pesquisa</h2>
                 <div class="max-h-80 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg">
                     <div id="lista-grupos" class="divide-y divide-slate-100 dark:divide-slate-800">
                         <div class="p-4 text-center text-slate-400 text-sm">Carregando grupos...</div>
@@ -141,8 +187,8 @@
             </div>
 
             <!-- 5. Projetos por Área -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm md:col-span-2">
-                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Projetos por Área</h2>
+            <div class="card-glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 p-6 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 md:col-span-2">
+                <h2 data-bi-titulo class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Projetos por Área</h2>
                 <div class="max-h-80 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg">
                     <div id="lista-areas" class="divide-y divide-slate-100 dark:divide-slate-800">
                         <div class="p-4 text-center text-slate-400 text-sm">Carregando áreas...</div>
@@ -153,7 +199,7 @@
         </div>
 
        <!-- Seção de Filtros Interativos Avançados -->
-       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
+       <div class="glass-static bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 p-6">
            <div class="flex justify-between items-center mb-4">
                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200">Filtrar Projetos </h2>
                <button onclick="limparFiltros()" class="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1">
@@ -271,7 +317,7 @@
        </div>
 
         <!-- Seção de Tabela -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
+        <div class="glass-static bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/70 dark:border-slate-700/50 rounded-xl shadow-lg shadow-slate-900/5 dark:shadow-black/20 p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200">Relação de Projetos Cadastrados</h2>
                 <span id="contador-exibicao" class="text-xs text-slate-400 font-medium">Exibindo registros</span>

@@ -9,6 +9,7 @@ let sequenciaBI = 0;
 
 document.addEventListener('biCampusAlterado', async (e) => {
     const minha = ++sequenciaBI;
+    atualizarTitulosBI(e.detail.nome || null, e.detail.cor || null); // atualiza os títulos na hora
     try {
         const data = await buscarIndicadores({ campus: e.detail.campus }); // null é ignorado pelo api.js
         if (minha !== sequenciaBI) return; // chegou um clique mais novo: descarta

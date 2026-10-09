@@ -1,34 +1,68 @@
-/* Estilização da barra de rolagem para navegadores baseados em WebKit (Chrome, Edge, Safari) */
-.dark *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/* ==========================================================
+   Painel PROPPI: estilos globais
+   ========================================================== */
+
+/* ---------- Fundo ambiente (dá o que desfocar aos cards de vidro) ---------- */
+body {
+    background-image:
+        radial-gradient(60rem 40rem at 6% -8%,  rgba(16, 185, 129, 0.14), transparent 60%),
+        radial-gradient(50rem 36rem at 100% 0%, rgba(59, 130, 246, 0.10), transparent 55%),
+        radial-gradient(50rem 40rem at 50% 112%, rgba(16, 185, 129, 0.08), transparent 60%);
+    background-attachment: fixed;
 }
-.dark *::-webkit-scrollbar-track {
-    background: #0f172a; /* Cor de fundo do trilho (slate-900 / slate-950) */
-    border-radius: 4px;
-}
-.dark *::-webkit-scrollbar-thumb {
-    background: #334155; /* Cor do "puxador" da barra (slate-700) */
-    border-radius: 4px;
-}
-.dark *::-webkit-scrollbar-thumb:hover {
-    background: #475569; /* Cor do puxador ao passar o mouse (slate-600) */
+.dark body {
+    background-image:
+        radial-gradient(60rem 40rem at 6% -8%,  rgba(16, 185, 129, 0.16), transparent 60%),
+        radial-gradient(50rem 36rem at 100% 0%, rgba(59, 130, 246, 0.14), transparent 55%),
+        radial-gradient(50rem 40rem at 50% 112%, rgba(16, 185, 129, 0.10), transparent 60%);
 }
 
-/* Animação que varia apenas a intensidade da luz */
+/* ---------- Cards de vidro ---------- */
+/* .card-glass: sobe levemente no hover (indicadores e gráficos)
+   .glass-static: só vidro, sem mover (filtros e tabela) */
+.card-glass,
+.glass-static {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s ease;
+}
+.dark .card-glass,
+.dark .glass-static {
+    /* fio de luz na borda superior */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.card-glass:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -12px rgba(15, 23, 42, 0.18);
+}
+.dark .card-glass:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                0 14px 30px -12px rgba(16, 185, 129, 0.18),
+                0 0 18px 0 rgba(16, 185, 129, 0.06);
+}
+
+/* ---------- Barras de rolagem ---------- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ---------- Brilho pulsante da rosca de situação ---------- */
 @keyframes brilhoPulsante {
-    0% {
-        filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.2));
-    }
-    50% {
-        filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.65));
-    }
-    100% {
-        filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.2));
-    }
+    0%   { filter: drop-shadow(0 0 4px  rgba(59, 130, 246, 0.25)); }
+    50%  { filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.60)); }
+    100% { filter: drop-shadow(0 0 4px  rgba(59, 130, 246, 0.25)); }
 }
-
-/* Aplicação da animação no canvas */
 #graficoSituacao, #grafico-situacao {
     animation: brilhoPulsante 3s infinite ease-in-out;
+}
+
+/* ---------- Acessibilidade: respeita "reduzir movimento" ---------- */
+@media (prefers-reduced-motion: reduce) {
+    #graficoSituacao, #grafico-situacao { animation: none; }
+    .card-glass, .glass-static { transition: none; }
+    .card-glass:hover { transform: none; }
 }

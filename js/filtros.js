@@ -9,7 +9,15 @@ function iniciarFiltros() {
 
     AUTOCOMPLETES.campus = criarAutocomplete({
         input: 'filtro-campus', lista: 'sugestoes-campus', btnLimpar: 'btn-limpar-campus',
-        opcoes: OPCOES_CAMPUS, recarregarAoDigitar: 300, nomeLimpar: 'limparFiltroCampus'
+        opcoes: OPCOES_CAMPUS, recarregarAoDigitar: 300, nomeLimpar: 'limparFiltroCampus',
+        aoAlterar: sincronizarCampusBI // mantém o destaque do mapa e os gráficos em sincronia com este campo
+    });
+
+    // Se o texto deixar de ser o campus ativo no mapa, o destaque e os gráficos voltam ao geral
+    const campoCampus = document.getElementById('filtro-campus');
+    if (campoCampus) campoCampus.addEventListener('input', () => {
+        const ativo = COORDENADAS_CAMPUS.find(c => c.id === campusAtivoBI);
+        if (ativo && campoCampus.value !== ativo.filtro) limparCampusBI();
     });
 
     AUTOCOMPLETES.situacao = criarAutocomplete({
