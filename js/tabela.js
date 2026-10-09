@@ -1,5 +1,19 @@
 // ===== Tabela de projetos e modal de detalhes =====
 
+// Mesma paleta da rosca (graficos.js): [cor escura, cor clara]
+const CORES_SITUACAO = {
+    'em execucao': ['#2563eb', '#60a5fa'], 'concluido': ['#059669', '#34d399'],
+    'em edicao': ['#d97706', '#fbbf24'],   'enviado': ['#4f46e5', '#818cf8'],
+    'nao enviado': ['#7c3aed', '#a78bfa'], 'nao aceito': ['#ea580c', '#fb923c'],
+    'nao selecionado': ['#e11d48', '#fb7185'], 'cancelado': ['#475569', '#94a3b8'],
+    'inativado': ['#334155', '#64748b']
+};
+
+function badgeSituacao(situacao) {
+    const [escura, clara] = CORES_SITUACAO[normalizarTexto(situacao)] || ['#0891b2', '#06b6d4'];
+    return `<span class="badge-situacao" style="--bc:${escura};--bc-claro:${clara}">${escaparHtml(situacao || '-')}</span>`;
+}
+
 // parâmetro da API -> id do campo na tela
 const CAMPOS_FILTRO = {
     titulo: 'input-busca-titulo',
@@ -53,7 +67,7 @@ async function carregarProjetos() {
                 <td class="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">${escaparHtml(p.titulo || '-')}</td>
                 <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${escaparHtml(p.campus || '-')}</td>
                 <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${escaparHtml(editalTexto)}</td>
-                <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 whitespace-nowrap">${escaparHtml(p.situacao_atual || '-')}</span></td>
+                <td class="py-3 px-4">${badgeSituacao(p.situacao_atual)}</td>
             `;
             tabela.appendChild(linha);
         });

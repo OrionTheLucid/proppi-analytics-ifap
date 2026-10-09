@@ -66,3 +66,21 @@ body {
     .card-glass, .glass-static { transition: none; }
     .card-glass:hover { transform: none; }
 }
+
+/* ---------- Badges de situação na tabela (cores definidas em tabela.js) ---------- */
+.badge-situacao {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bc);
+    background: color-mix(in srgb, var(--bc) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bc) 30%, transparent);
+}
+.dark .badge-situacao {
+    color: var(--bc-claro);
+    background: color-mix(in srgb, var(--bc-claro) 14%, transparent);
+    border-color: color-mix(in srgb, var(--bc-claro) 30%, transparent);
+}
