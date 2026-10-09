@@ -74,12 +74,14 @@ if (elSituacao) {
                     ctx.fill();
                 }
 
-                // 2. Totalizador central
+                // 2. Totalizador central DINÂMICO
+                const somaAtual = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+
                 ctx.font = "bold 22px 'Inter', sans-serif";
                 ctx.fillStyle = corTexto;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(totalProjetos, centerX, centerY - 8);
+                ctx.fillText(somaAtual, centerX, centerY - 8);
 
                 ctx.font = "500 11px 'Inter', sans-serif";
                 ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
@@ -98,8 +100,7 @@ if (elSituacao) {
                     const { ctx, chartArea } = chart;
                     if (!chartArea) return null;
 
-                    const index = context.dataIndex;
-                    const label = situacoesLabels[index];
+                    const label = chart.data.labels[context.dataIndex];
                     const cores = mapaGradientes[label] || ['#0891b2', '#06b6d4'];
 
                     const centerX = (chartArea.left + chartArea.right) / 2;
@@ -248,4 +249,24 @@ function renderizarListaGrupos(grupos) {
         `;
         container.appendChild(linha);
     });
+}
+
+// Função chamada pelo main.js para atualizar APENAS os dados dos gráficos (Gera animação fluida)
+function atualizarGraficosBI(data) {
+    dadosIndicadoresGlobais = data;
+    
+    if (chartSituacao) {
+        chartSituacao.data.labels = Object.keys(data.distribuicao_por_situacao || {});
+        chartSituacao.data.datasets[0].data = Object.values(data.distribuicao_por_situacao || {});
+        chartSituacao.update(); // Dispara animação
+    }
+
+    if (chartAno) {
+        chartAno.data.labels = Object.keys(data.distribuicao_por_ano || {});
+        chartAno.data.datasets[0].data = Object.values(data.distribuicao_por_ano || {});
+        chartAno.update(); // Dispara animação
+    }
+
+    renderizarListaAreas(data.distribuicao_por_area);
+    renderizarListaGrupos(data.distribuicao_por_grupo);
 }

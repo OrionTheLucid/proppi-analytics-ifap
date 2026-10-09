@@ -162,46 +162,55 @@ def listar_projetos(
 
 # 5.1 Rota para indicadores e Business Intelligence (DEVE VIR ANTES da rota de ID)
 @app.get("/api/projetos/indicadores")
-def obter_indicadores(db: Session = Depends(get_db)):
-    total_geral = db.query(models.ProjetoModel).count()
+def obter_indicadores(campus: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    # Query base que receberá o filtro, se houver
+    query_base = db.query(models.ProjetoModel)
 
-    por_campus = db.query(
-        models.ProjetoModel.campus,
-        func.count(models.ProjetoModel.id)
-    ).group_by(models.ProjetoModel.campus).all()
+    if campus:
+        MAPEAMENTO_CAMPUS = {
+            "macapa": "MCP", "mcp": "MCP", "laranjal": "LRJ", "jari": "LRJ", "lrj": "LRJ",
+            "porto": "PTG", "grande": "PTG", "ptg": "PTG", "santana": "STN", "stn": "STN",
+            "oiapoque": "OPQ", "opq": "OPQ", "reitoria": "RE", "re": "RE",
+            "pedra": "PBA", "branca": "PBA", "amapari": "PBA", "pba": "PBA"
+        }
+        if "(" in campus and ")" in campus:
+            sigla = campus.split("(")[-1].replace(")", "").strip()
+            query_base = query_base.filter(models.ProjetoModel.campus.ilike(f"%{sigla}%"))
+        else:
+            termo = campus.lower().strip()
+            sigla_encontrada = MAPEAMENTO_CAMPUS.get(termo)
+            if sigla_encontrada:
+                query_base = query_base.filter(
+                    (models.ProjetoModel.campus.ilike(f"%{campus}%")) |
+                    (models.ProjetoModel.campus.ilike(f"%{sigla_encontrada}%"))
+                )
+            else:
+                query_base = query_base.filter(models.ProjetoModel.campus.ilike(f"%{campus}%"))
 
-    por_situacao = db.query(
-        models.ProjetoModel.situacao_atual,
-        func.count(models.ProjetoModel.id)
-    ).group_by(models.ProjetoModel.situacao_atual).all()
+    # Métricas filtradas dinamicamente
+    total_geral = query_base.count()
 
-    por_ano = db.query(
-        models.ProjetoModel.ano_edital,
-        func.count(models.ProjetoModel.id)
-    ).group_by(models.ProjetoModel.ano_edital).order_by(models.ProjetoModel.ano_edital).all()
+    # O Mapa SEMPRE precisa da distribuição global para não apagar os outros campi
+    por_campus = db.query(models.ProjetoModel.campus, func.count(models.ProjetoModel.id))\
+        .group_by(models.ProjetoModel.campus).all()
 
-    # Exclui o grupo "-" e pega os principais
-    por_grupo = db.query(
-        models.ProjetoModel.grupo_pesquisa,
-        func.count(models.ProjetoModel.id)
-    ).filter(
-        models.ProjetoModel.grupo_pesquisa != "-",
-        models.ProjetoModel.grupo_pesquisa != None
-    ).group_by(models.ProjetoModel.grupo_pesquisa).order_by(func.count(models.ProjetoModel.id).desc()).limit(10).all()
+    # As demais métricas respeitam o filtro (query_base.with_entities substitui o SELECT mantendo o WHERE)
+    por_situacao = query_base.with_entities(models.ProjetoModel.situacao_atual, func.count(models.ProjetoModel.id))\
+        .group_by(models.ProjetoModel.situacao_atual).all()
 
-    # Pega as áreas de conhecimento para o gráfico ficar limpo e legível
-    por_area = db.query(
-        models.ProjetoModel.area_conhecimento,
-        func.count(models.ProjetoModel.id)
-    ).filter(
-        models.ProjetoModel.area_conhecimento != "-",
-        models.ProjetoModel.area_conhecimento != None
-    ).group_by(models.ProjetoModel.area_conhecimento).order_by(func.count(models.ProjetoModel.id).desc()).limit(100).all()
+    por_ano = query_base.with_entities(models.ProjetoModel.ano_edital, func.count(models.ProjetoModel.id))\
+        .group_by(models.ProjetoModel.ano_edital).order_by(models.ProjetoModel.ano_edital).all()
+
+    por_grupo = query_base.with_entities(models.ProjetoModel.grupo_pesquisa, func.count(models.ProjetoModel.id))\
+        .filter(models.ProjetoModel.grupo_pesquisa != "-", models.ProjetoModel.grupo_pesquisa != None)\
+        .group_by(models.ProjetoModel.grupo_pesquisa).order_by(func.count(models.ProjetoModel.id).desc()).limit(10).all()
+
+    por_area = query_base.with_entities(models.ProjetoModel.area_conhecimento, func.count(models.ProjetoModel.id))\
+        .filter(models.ProjetoModel.area_conhecimento != "-", models.ProjetoModel.area_conhecimento != None)\
+        .group_by(models.ProjetoModel.area_conhecimento).order_by(func.count(models.ProjetoModel.id).desc()).limit(100).all()
 
     return {
-        "metrica_geral": {
-            "total_projetos": total_geral
-        },
+        "metrica_geral": {"total_projetos": total_geral},
         "distribuicao_por_campus": {str(k): v for k, v in por_campus},
         "distribuicao_por_situacao": {str(k): v for k, v in por_situacao},
         "distribuicao_por_ano": {str(k): v for k, v in por_ano},

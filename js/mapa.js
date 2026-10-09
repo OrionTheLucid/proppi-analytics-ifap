@@ -12,9 +12,18 @@ const COORDENADAS_CAMPUS = [
 ];
 
 let contagemCampus = {};
+let campusAtivoBI = null; // Controla qual campus está filtrando os gráficos
 
 function filtrarPorCampus(c) {
-    if (AUTOCOMPLETES.campus) AUTOCOMPLETES.campus.definir(c.filtro);
+    if (campusAtivoBI === c.id) {
+        campusAtivoBI = null;
+        if (AUTOCOMPLETES.campus) AUTOCOMPLETES.campus.limpar();
+        document.dispatchEvent(new CustomEvent('biCampusAlterado', { detail: { campus: null } }));
+    } else {
+        campusAtivoBI = c.id;
+        if (AUTOCOMPLETES.campus) AUTOCOMPLETES.campus.definir(c.filtro);
+        document.dispatchEvent(new CustomEvent('biCampusAlterado', { detail: { campus: c.filtro, nome: c.nome } }));
+    }
 }
 
 // Cria os marcadores e rótulos coloridos uma única vez
@@ -73,7 +82,11 @@ function posicionarMapa() {
         const cx = x + (c.lado === 'dir' ? c.dx : -c.dx), cy = y + c.dy;
 
         const dot = document.getElementById(`dot-${c.id}`);
-        dot.style.cssText = `left:${x}px;top:${y}px;width:${2 * r}px;height:${2 * r}px;z-index:${100 - Math.round(r)}`;
+        Object.assign(dot.style, {
+    left: `${x}px`, top: `${y}px`,
+    width: `${2 * r}px`, height: `${2 * r}px`,
+    zIndex: 100 - Math.round(r)
+});
         const chip = document.getElementById(`pin-${c.id}`);
         chip.style.left = `${cx}px`; chip.style.top = `${cy}px`;
         chip.style.transform = `translate(${c.lado === 'dir' ? '0' : '-100%'}, -50%)`;
@@ -104,4 +117,10 @@ COORDENADAS_CAMPUS.forEach(c => {
     if (el) el.innerText = contagemCampus[c.id];
 });
 posicionarMapa();
+}
+
+function limparCampusBI() {
+    if (campusAtivoBI === null) return;
+    campusAtivoBI = null;
+    document.dispatchEvent(new CustomEvent('biCampusAlterado', { detail: { campus: null } }));
 }

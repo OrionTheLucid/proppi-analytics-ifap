@@ -17,8 +17,8 @@ function buscarProjetos(filtros = {}, limite = 50) {
     return requisitar('/api/projetos', { ...filtros, limite });
 }
 
-function buscarIndicadores() {
-    return requisitar('/api/projetos/indicadores');
+function buscarIndicadores(params = {}) {
+    return requisitar('/api/projetos/indicadores', params);
 }
 
 function buscarProjeto(id) {
